@@ -2,15 +2,16 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 public class MW_Search implements Runnable{
 
-    private Socket worker_id;
+    private SocketAddress worker_id;
     private String query;
 
-    public MW_Search(Socket worker_id, String query) {
+    public MW_Search(SocketAddress worker_id, String query) {
         this.worker_id = worker_id;
         this.query = query;
     }
@@ -20,7 +21,7 @@ public class MW_Search implements Runnable{
         Socket WorkerCon = new Socket();
         while(!WorkerCon.isConnected()){
             try{
-                WorkerCon.connect(worker_id.getRemoteSocketAddress());
+                WorkerCon.connect(worker_id);
                 ObjectOutputStream out = new ObjectOutputStream(WorkerCon.getOutputStream());
                 out.writeObject(request);
                 out.flush();
