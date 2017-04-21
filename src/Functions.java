@@ -87,8 +87,10 @@ public class Functions{
     private Hashtable<String, Socket> loadWorkers(){
         createWorkers();
         try{
-            FileInputStream f = new FileInputStream(workers_file);
-            return (Hashtable<String, Socket>) new ObjectInputStream(f).readObject();
+            synchronized(workers_file) {
+                FileInputStream f = new FileInputStream(workers_file);
+                return (Hashtable<String, Socket>) new ObjectInputStream(f).readObject();
+            }
         }catch(IOException e){
             System.err.println("Master_loadWorkers: IOException occurred");
             e.printStackTrace();
@@ -120,7 +122,7 @@ public class Functions{
         workers.put(worker_id, worker_con);
         try{
             Hashtable<String, Socket> temp = loadWorkers();
-            workers.putAll(temp);
+            temp.putAll(workers);
             synchronized(workers_file){
                 FileOutputStream c = new FileOutputStream(workers_file);
                 ObjectOutputStream out = new ObjectOutputStream(c);
@@ -141,7 +143,8 @@ public class Functions{
     public String hash(){
         //TODO not finished
         //TODO check inheritance problems on class_name
-        String class_name = node.getClass().getName();
+        String super_class = node.getClass().getSuperclass().getSimpleName();
+        String class_name = (super_class.equals("Object") ? node.getClass().getSimpleName() : super_class);
         if(class_name.equals("Master")){
             return ((Master)node).hash();
         }else if(class_name.equals("Worker")){
@@ -160,13 +163,10 @@ public class Functions{
             return true;
         }catch(NullPointerException e){
             System.err.println("Functions_checkFile: File not found");
-            e.printStackTrace();
         }catch(FileNotFoundException e){
             System.err.println("Functions_checkFile: Error opening file");
-            e.printStackTrace();
         }catch (IOException e){
             System.out.println("Functions_checkFile: Sudden end.");
-            e.printStackTrace();
         }
         return false;
     }
@@ -176,9 +176,9 @@ public class Functions{
             try{
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
                 writer.write("");
+                writer.close();
             }catch(IOException e){
-                System.err.println("IO Error");
-                e.printStackTrace();
+                System.err.println("Functions_createFile: IO Error");
             }
         }
     }
