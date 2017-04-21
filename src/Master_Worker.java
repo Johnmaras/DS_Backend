@@ -3,6 +3,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.Hashtable;
 
 //TODO fix error messages
@@ -23,7 +24,7 @@ public class Master_Worker extends Master implements Runnable{
     public void run(){
         Functions functions = new Functions(this);
         if(requestType == 1){
-            for(Socket worker: functions.getWorkers().values()){
+            for(SocketAddress worker: functions.getWorkers().values()){
                 new Thread(new MW_Search(worker, query)).start();
             }
         }else if(requestType == 2){
