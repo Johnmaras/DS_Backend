@@ -34,4 +34,9 @@ public class Master_Worker extends Master implements Runnable{
             //TODO update cache
         }
     }
+
+    public static void main(String[] args){
+        Functions functions = new Functions(new Master_Worker(null, 0));
+
+    }
 }
