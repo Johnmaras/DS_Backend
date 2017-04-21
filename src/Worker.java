@@ -103,14 +103,14 @@ public class Worker implements Runnable{
         while(handCon == null){
             try{
                 handCon = new Socket(InetAddress.getByName("127.0.0.1"), 4000); //TODO get ip and port from the appropriate Functions' method
-                ID = handCon.getLocalSocketAddress().toString();
+                ID = handCon.getLocalAddress().toString();
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
                 Message message = new Message();
-                message.setQuery("handshake"); //redundant
+                message.setQuery(ID);
                 out.writeObject(message);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
-                String ack = ((Message)in.readObject()).getQuery();
+                String ack = in.readUTF();
                 System.out.println(ack);
             }catch(NullPointerException e){
                 System.err.println("Worker_masterHandshake: Null pointer occurred. Trying again");
@@ -118,8 +118,6 @@ public class Worker implements Runnable{
                 System.err.println("Worker_masterHandshake: You are trying to connect to an unknown host!");
             }catch(IOException e){
                 System.err.println("Worker_masterHandshake: There was an IO error on openServer");
-            } catch (ClassNotFoundException e) {
-                System.err.println("Worker_masterHandshake: Class not found");
             }
         }
     }
