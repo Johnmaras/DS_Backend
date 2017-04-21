@@ -7,11 +7,10 @@ import java.util.ArrayList;
 public class Master implements Runnable{
 
     private Socket connection;
-    private String ID;
+    private String ID = getID();
 
     public Master(Socket con){
         this.connection = con;
-        setID(connection.getLocalSocketAddress().toString());
     }
 
     public Master(){}
@@ -20,6 +19,18 @@ public class Master implements Runnable{
         return ID;
     }
 
+    public void setConnection(Socket con){
+        this.connection = con;
+    }
+
+    private String getID(){
+        try{
+            return InetAddress.getLocalHost().getHostAddress();
+        }catch(UnknownHostException e){
+            System.err.println("Unknown Host");
+        }
+        return null;
+    }
     public void setID(String id){
         this.ID = id;
     }
@@ -71,13 +82,10 @@ public class Master implements Runnable{
 
                             }catch(NullPointerException e){
                                 System.err.println("Master_run: Null Pointer!");
-                                e.printStackTrace();
                             }catch(SocketTimeoutException e){
                                 System.err.println("Master_run: Socket Time Out!");
-                                e.printStackTrace();
                             }catch(ClassNotFoundException e){
                                 System.err.println("Master_run: Class Not Found. in");
-                                e.printStackTrace();
                             }
                         }
                         reducerCon.close();
@@ -94,16 +102,18 @@ public class Master implements Runnable{
                     message = (Message)in.readObject();
                 }while(true);
             }else if(message.getRequestType() == 0){
-                String worker_id = connection.getRemoteSocketAddress().toString();
-                functions.updateWorkers(worker_id, connection);
+                SocketAddress worker = connection.getRemoteSocketAddress();
+                String worker_id = worker.toString();
+                functions.updateWorkers(worker_id, worker);
+                ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
+                out.writeUTF("Connection Done!");
+                out.flush();
                 System.out.println("Worker " + worker_id + " added.");
             }
         }catch(IOException e){
             System.err.println("Master_run: IO Error");
-            e.printStackTrace();
         }catch(ClassNotFoundException e){
             System.err.println("Master_run: Class not found. out");
-            e.printStackTrace();
         }
     }
 
@@ -120,10 +130,8 @@ public class Master implements Runnable{
                 out.close();
             } catch (UnknownHostException e) {
                 System.err.println("Master_connectToReducer: Unknown Host");
-                e.printStackTrace();
             } catch (IOException e) {
                 System.err.println("Master_connectToReducer: IO Error");
-                e.printStackTrace();
             }
         }
         return ReducerCon;
@@ -140,12 +148,10 @@ public class Master implements Runnable{
                     System.out.println("Connection accepted: " + new_con.toString());
                 }catch(IOException e){
                     System.err.println("Master_main: There was an IO error 1");
-                    e.printStackTrace();
                 }
             }
         }catch(IOException e){
             System.err.println("Master_main: There was an IO error 2");
-            e.printStackTrace();
         }
     }
 }
