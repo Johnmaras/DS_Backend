@@ -1,5 +1,3 @@
-import com.sun.corba.se.impl.io.IIOPInputStream;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -7,8 +5,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Random;
 
 public class Worker implements Runnable{
 
@@ -70,8 +66,7 @@ public class Worker implements Runnable{
                 try{
                     con.connect(con.getRemoteSocketAddress());
                 }catch(IOException e){
-                    System.err.println("Worker_sendToMaster: There was an IO error");
-                    e.printStackTrace();
+                    System.err.println("Worker_sendToMaster: There was an IO error 1");
                 }
             }
         }
@@ -80,8 +75,7 @@ public class Worker implements Runnable{
             Masterout.writeObject(message);
             Masterout.flush();
         }catch (IOException e) {
-            System.err.println("Worker_sendToMaster: There was an IO error");
-            e.printStackTrace();
+            System.err.println("Worker_sendToMaster: There was an IO error 2");
         }
     }
 
@@ -120,16 +114,12 @@ public class Worker implements Runnable{
                 System.out.println(ack);
             }catch(NullPointerException e){
                 System.err.println("Worker_masterHandshake: Null pointer occurred. Trying again");
-                e.printStackTrace();
             }catch(UnknownHostException e){
                 System.err.println("Worker_masterHandshake: You are trying to connect to an unknown host!");
-                e.printStackTrace();
             }catch(IOException e){
                 System.err.println("Worker_masterHandshake: There was an IO error on openServer");
-                e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 System.err.println("Worker_masterHandshake: Class not found");
-                e.printStackTrace();
             }
         }
     }
@@ -144,13 +134,11 @@ public class Worker implements Runnable{
                     System.out.println("Connection accepted: " + connection.toString());
                     new Thread(new Worker(connection)).start();
                 }catch(IOException e){
-                    System.err.println("Worker_main: There was an IO error");
-                    e.printStackTrace();
+                    System.err.println("Worker_main: There was an IO error 1");
                 }
             }
         }catch(IOException e){
-            System.err.println("Worker_main: There was an IO error");
-            e.printStackTrace();
+            System.err.println("Worker_main: There was an IO error 2");
         }
     }
 }
