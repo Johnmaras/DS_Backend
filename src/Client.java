@@ -25,6 +25,7 @@ public class Client {
             }
         }
         while(true){
+            //TODO check if connection is still valid
             Scanner scanner = new Scanner(System.in);
             System.out.print("Give the string you want to search: ");
             String query = scanner.nextLine();
