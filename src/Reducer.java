@@ -36,16 +36,13 @@ public class Reducer implements Runnable{
     @Override
     public void run(){
         try{
-            //ObjectInputStream in = new ObjectInputStream(con.getInputStream());
-            //Message request = (Message)in.readObject();
-            String string = Double.toString(Math.random()) + "test";
-            Message request = new Message();
-            request.setRequestType(7);
-            request.setData(string);
+            ObjectInputStream in = new ObjectInputStream(con.getInputStream());
+            Message request = (Message)in.readObject();
             if(request.getRequestType() == 7){
                 BufferedWriter writer = new BufferedWriter(new FileWriter(temp, true));
+                //TODO use reduce method
                 for(String s: request.getData()){
-                    synchronized(temp){ //TODO works fine
+                    synchronized(temp){ //works fine
                         writer.write(s);
                         writer.newLine();
                         writer.flush();
@@ -71,9 +68,9 @@ public class Reducer implements Runnable{
             System.err.println("Reducer_run: File not found!");
         }catch(IOException e){
             System.err.println("Reducer_run: IOException occurred");
-        }/*catch(ClassNotFoundException e) {
+        }catch(ClassNotFoundException e) {
             System.err.println("Reducer_run: Class not found occurred");
-        }*/
+        }
     }
 
     private void sendToMaster(String query, ArrayList<String> data){
@@ -92,10 +89,7 @@ public class Reducer implements Runnable{
     }
 
     public static void main(String[] args){
-        for(int i = 0; i < 100; i++){
-            new Thread(new Reducer(null)).start();
-        }
-        /*try{
+        try{
             ServerSocket listenSocket = new ServerSocket(4001);
             while(true){
                 try{
@@ -107,6 +101,6 @@ public class Reducer implements Runnable{
             }
         }catch(IOException e){
             System.err.println("Reducer_main: There was an IO error");
-        }*/
+        }
     }
 }
