@@ -20,7 +20,7 @@ public class FileInit{
 
             reader.close();
 
-            FileOutputStream fo = new FileOutputStream(new File("worker_192.168.1.67_cache"));
+            FileOutputStream fo = new FileOutputStream(new File("worker_" + new Worker(null).hash() + "_cache"));
             ObjectOutputStream out = new ObjectOutputStream(fo);
             out.writeObject(data);
             out.flush();
