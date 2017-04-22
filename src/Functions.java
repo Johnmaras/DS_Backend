@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Hashtable;
 
 public class Functions{
@@ -12,17 +13,17 @@ public class Functions{
     private Hashtable<String, String> cache; //term(key) and depth in the file(value)
 
     private final File workers_file; //only the master node has workers file
-    private Hashtable<String, SocketAddress> workers;
+    private HashSet<String> workers;
 
     public Functions(Object node){
         this.node = node;
         this.cache_file = new File(hash() + "_cache");
         this.cache = loadCache();
-        this.workers_file = (this.node.getClass().getName().equals("Master") ? new File(hash() + "_workers") : null);
-        this.workers = (this.node.getClass().getName().equals("Master") ? loadWorkers() : null);
+        this.workers_file = (this.node.toString().equals("Master") ? new File(hash() + "_workers") : null);
+        this.workers = (this.node.toString().equals("Master") ? loadWorkers() : null);
     }
 
-    public Hashtable<String, SocketAddress> getWorkers(){ return workers;}
+    public HashSet<String> getWorkers(){ return workers;}
 
     private Hashtable<String, String> loadCache(){
         createCache();
@@ -82,15 +83,16 @@ public class Functions{
     }
 
     public String searchCache(String query){
+        cache = loadCache();
         return cache.get(query);
     }
 
-    private Hashtable<String, SocketAddress> loadWorkers(){
+    private HashSet<String> loadWorkers(){
         createWorkers();
         try{
             synchronized(workers_file) {
                 FileInputStream f = new FileInputStream(workers_file);
-                return (Hashtable<String, SocketAddress>) new ObjectInputStream(f).readObject();
+                return (HashSet<String>) new ObjectInputStream(f).readObject();
             }
         }catch(IOException e){
             System.err.println("Master_loadWorkers: IOException occurred");
@@ -99,12 +101,12 @@ public class Functions{
             System.err.println("Master_loadWorkers: ClassNotFoundException occurred");
             e.printStackTrace();
         }
-        return new Hashtable<>();
+        return new HashSet<>();
     }
 
     private void createWorkers(){
         if(!checkFile(workers_file)){
-            Hashtable<String, SocketAddress> temp = new Hashtable<>();
+            HashSet<String> temp = new HashSet<>();
             try{
                 synchronized(workers_file){
                     FileOutputStream f = new FileOutputStream(workers_file);
@@ -119,11 +121,11 @@ public class Functions{
         }
     }
 
-    public void updateWorkers(String worker_id, SocketAddress worker_con){
-        workers.put(worker_id, worker_con);
+    public void updateWorkers(String worker_id){
+        workers.add(worker_id);
         try{
-            Hashtable<String, SocketAddress> temp = loadWorkers();
-            temp.putAll(workers);
+            HashSet<String> temp = loadWorkers();
+            temp.addAll(workers);
             synchronized(workers_file){
                 FileOutputStream c = new FileOutputStream(workers_file);
                 ObjectOutputStream out = new ObjectOutputStream(c);
@@ -142,8 +144,7 @@ public class Functions{
     }
 
     public String hash(){
-        String super_class = node.getClass().getSuperclass().getSimpleName();
-        String class_name = (super_class.equals("Object") ? node.getClass().getSimpleName() : super_class);
+        String class_name = this.node.toString();
         if(class_name.equals("Master")){
             return "master_" + ((Master)node).hash();
         }else if(class_name.equals("Worker")){
@@ -161,11 +162,11 @@ public class Functions{
             reader.readLine();
             return true;
         }catch(NullPointerException e){
-            System.err.println("Functions_checkFile: File not found");
+            System.err.println("Functions_checkFile: File not found " + file.getName());
         }catch(FileNotFoundException e){
-            System.err.println("Functions_checkFile: Error opening file");
+            System.err.println("Functions_checkFile: Error opening file " + file.getName());
         }catch (IOException e){
-            System.out.println("Functions_checkFile: Sudden end.");
+            System.out.println("Functions_checkFile: Sudden end. " + file.getName());
         }
         return false;
     }
@@ -177,7 +178,7 @@ public class Functions{
                 writer.write("");
                 writer.close();
             }catch(IOException e){
-                System.err.println("Functions_createFile: IO Error");
+                System.err.println("Functions_createFile: IO Error" + file.getName());
             }
         }
     }

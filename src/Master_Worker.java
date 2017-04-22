@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.Hashtable;
+
+import static java.lang.Thread.sleep;
 
 //TODO fix error messages
 //TODO may add acknowledgements
@@ -22,10 +25,26 @@ public class Master_Worker extends Master implements Runnable{
 
     @Override
     public void run(){
+        ArrayList<Thread> threads = new ArrayList<>();
         Functions functions = new Functions(this);
+        //TODO threads must be joined
         if(requestType == 1){
-            for(SocketAddress worker: functions.getWorkers().values()){
-                new Thread(new MW_Search(worker, query)).start();
+            for(String worker_id: functions.getWorkers()){
+                threads.add(new Thread(new MW_Search(worker_id, query)));
+            }
+            threads.forEach(Thread::start);
+            /*try {
+                sleep((int) (Math.random() * 5000));
+            } catch (InterruptedException e) {
+                System.err.println("Error on thread " + this.toString());
+            }*/
+            try{
+                for(Thread t: threads){
+                    t.join();
+                    //System.out.println("Finished " + i);
+                }
+            }catch(InterruptedException e){
+                e.printStackTrace();
             }
         }else if(requestType == 2){
             //TODO find specific worker

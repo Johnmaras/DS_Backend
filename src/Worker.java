@@ -9,7 +9,7 @@ import java.net.UnknownHostException;
 public class Worker implements Runnable{
 
     private Socket con;
-    private String ID;
+    private String ID = "192.168.1.67";
 
     public Worker(Socket con){
         this.con = con;
@@ -21,6 +21,20 @@ public class Worker implements Runnable{
 
     public String hash(){
         return this.ID;
+    }
+
+    /*private String getID(){
+        try{
+            return InetAddress.getLocalHost().getHostAddress();
+        }catch(UnknownHostException e){
+            System.err.println("Unknown Host");
+        }
+        return null;
+    }*/
+
+    @Override
+    public String toString() {
+        return "Worker";
     }
 
     @Override
@@ -85,25 +99,32 @@ public class Worker implements Runnable{
         Socket Reducercon = null;
         while(Reducercon == null) {
             try {
-                Reducercon = new Socket(InetAddress.getByName("127.0.0.1"), 4001);
+                Reducercon = new Socket(InetAddress.getByName("192.168.1.67"), 4001);
                 ObjectOutputStream ReducerOut = new ObjectOutputStream(Reducercon.getOutputStream());
                 ReducerOut.writeObject(message);
                 ReducerOut.flush();
-                //TODO wait for ack
+                System.out.print(System.nanoTime() + " Sent " + query + " " + data);
+                ObjectInputStream in = new ObjectInputStream(Reducercon.getInputStream());
+                String string = in.readUTF();
+                if(string.equals("Done")){
+                    break;
+                }
             }catch(UnknownHostException e){
                 System.err.println("WM_Search: You are trying to connect to an unknown host!");
             }catch(IOException e){
                 System.err.println("WM_Search: There was an IO error on startClient()");
             }
         }
+        System.out.println("Finished");
     }
 
     private void masterHandshake(){
         Socket handCon = null;
         while(handCon == null){
             try{
-                handCon = new Socket(InetAddress.getByName("127.0.0.1"), 4000); //TODO get ip and port from the appropriate Functions' method
-                ID = handCon.getLocalAddress().toString();
+                handCon = new Socket(InetAddress.getByName("192.168.1.67"), 4000); //TODO get ip and port from the appropriate Functions' method
+                ID = "192.168.1.67";
+                //ID = ID.substring(ID.indexOf('/') + 1);
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
                 Message message = new Message();
                 message.setQuery(ID);
@@ -128,6 +149,7 @@ public class Worker implements Runnable{
             ServerSocket listenSocket = new ServerSocket(4002);
             while(true){
                 try{
+                    System.out.println("Waiting for connections...");
                     Socket connection = listenSocket.accept();
                     System.out.println("Connection accepted: " + connection.toString());
                     new Thread(new Worker(connection)).start();

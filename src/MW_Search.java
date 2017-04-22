@@ -1,27 +1,25 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
+import java.net.*;
 
 public class MW_Search implements Runnable{
 
-    private SocketAddress worker_id;
+    private String worker_id;
     private String query;
 
-    public MW_Search(SocketAddress worker_id, String query) {
+    public MW_Search(String worker_id, String query) {
         this.worker_id = worker_id;
         this.query = query;
     }
     @Override
     public void run() {
         Message request = new Message(1, query);
-        Socket WorkerCon = new Socket();
-        while(!WorkerCon.isConnected()){
+        Socket WorkerCon = null;
+        while(WorkerCon == null){
             try{
-                WorkerCon.connect(worker_id);
+                //System.out.println(worker_id);
+                WorkerCon = new Socket(InetAddress.getByName(worker_id), 4002);
                 ObjectOutputStream out = new ObjectOutputStream(WorkerCon.getOutputStream());
                 out.writeObject(request);
                 out.flush();
@@ -33,7 +31,7 @@ public class MW_Search implements Runnable{
                         in = new ObjectInputStream(WorkerCon.getInputStream());
                         request = (Message)in.readObject();
                         if(request.getRequestType() == 5){
-                            break;
+                            System.out.print(System.nanoTime() + " worker done.");
                         }
                     }catch(NullPointerException e){
                         System.err.println("MW_Search_run: Null Pointer!");
