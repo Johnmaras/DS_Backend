@@ -13,7 +13,7 @@ public class FileInit{
             Hashtable<String, String> data = new Hashtable<>();
             String line = reader.readLine();
             while(line != null){
-                Tuple t = new Tuple(line, Double.toString(line.hashCode() + Math.round(Math.random())));
+                Tuple t = new Tuple(line, Double.toString(line.hashCode() * Math.random()));
                 data.put(t.getKey(), t.getValue());
                 line = reader.readLine();
             }
