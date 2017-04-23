@@ -3,7 +3,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
 
+//TODO handle the master's waiting for connecting to reducer
 public class Master implements Runnable{
 
     private Socket connection;
@@ -89,6 +91,7 @@ public class Master implements Runnable{
         }catch(IOException e){
             System.err.println("Master_run: IO Error");
             e.printStackTrace();
+            //TODO handle the reset connection error on client connections
         }catch(ClassNotFoundException e){
             System.err.println("Master_run: Class not found. out");
         }
@@ -122,7 +125,7 @@ public class Master implements Runnable{
                                 }
                             }else{
                                 ArrayList<String> data = message.getData();
-                                String max = data.parallelStream().max(String::compareTo).get();
+                                String max = Double.toString(data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max().getAsDouble());
                                 functions.updateCache(message.getQuery(), max);
                             }
                         }
@@ -147,6 +150,7 @@ public class Master implements Runnable{
     }
 
     public static void main(String[] args){
+        new Functions(new Master()).clearFiles();
         try{
             ServerSocket listenSocket = new ServerSocket(4000);
             while(true){
