@@ -4,6 +4,8 @@ import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
+import java.util.OptionalDouble;
+import java.util.function.DoubleConsumer;
 
 //TODO handle the master's waiting for connecting to reducer
 public class Master implements Runnable{
@@ -57,7 +59,7 @@ public class Master implements Runnable{
                     if(query.equals("quit")) break;
                     String response = functions.searchCache(query);
                     if(response == null){
-                        Thread t = new Thread(new Master_Worker(query, 1));
+                        Thread t = new Thread(new Master_Worker(query, 1, functions));
                         t.start();
                         try{
                             t.join();
@@ -69,6 +71,20 @@ public class Master implements Runnable{
                         }
                         connectToReducer(functions, query);
                         response = functions.searchCache(query);
+                        /*if(response == null){
+                            t = new Thread(new Master_Worker(query, 2, functions));
+                            t.start();
+                            try{
+                                t.join();
+                                //System.out.println("Finished outer");
+                            }catch(InterruptedException e){
+                                System.err.println("Master_run: Interrupted! 1");
+                                e.printStackTrace();
+                                //TODO break if thread crashes
+                            }
+                        }
+                        //connectToReducer(functions, query);
+                        response = functions.searchCache(query);*/
                     }
                     //System.out.println(query + " added.");
                     message = new Message();
@@ -115,7 +131,7 @@ public class Master implements Runnable{
                         if(message.getRequestType() == 8){
                             if(message.getData().isEmpty()){
                                 //join is needed to be sure that Master_Worker has updated the cache
-                                Thread t = new Thread((new Master_Worker(message.getQuery(), 2)));
+                                Thread t = new Thread((new Master_Worker(message.getQuery(), 2, functions)));
                                 t.start();
                                 try{
                                     t.join();
@@ -125,8 +141,8 @@ public class Master implements Runnable{
                                 }
                             }else{
                                 ArrayList<String> data = message.getData();
-                                String max = Double.toString(data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max().getAsDouble());
-                                functions.updateCache(message.getQuery(), max);
+                                OptionalDouble max = data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
+                                if(max.isPresent()) functions.updateCache(message.getQuery(), Double.toString(max.getAsDouble()));
                             }
                         }
 

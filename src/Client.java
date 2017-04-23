@@ -28,9 +28,14 @@ public class Client {
             }
             while(true){
                 //TODO check if connection is still valid
+
                 Scanner scanner = new Scanner(System.in);
                 System.out.print("Give the string you want to search: ");
                 String query = scanner.nextLine();
+                if(MasterCon.isClosed()){
+                    flag = true;
+                    break;
+                }
                 Message request = new Message(9, query);
                 try{
                     ObjectOutputStream out = new ObjectOutputStream(MasterCon.getOutputStream());
@@ -46,7 +51,7 @@ public class Client {
                     ArrayList<String> data = request.getData();
                     data.forEach(System.out::println);
                 }catch(IOException e){
-                    System.err.println("Worker_connectToMaster: There was an IO error on openServer");
+                    System.err.println("There was an IO error on openServer");
                     e.printStackTrace();
                 }catch(NullPointerException e){
                     System.err.println("Null Pointer!");

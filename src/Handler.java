@@ -17,7 +17,7 @@ public class Handler{
                     ObjectInputStream in = new ObjectInputStream(fi);
                     Hashtable<String, String> cache = (Hashtable<String, String>) in.readObject();
                     for(String key : cache.keySet()){
-                        System.out.println("key = " + key + " value = " + cache.get(key));
+                        System.out.println("key = " + key + " value = " + key.hashCode());
                     }
                     fi.close();
                     in.close();
@@ -33,9 +33,9 @@ public class Handler{
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
-                    HashSet<String> cache = (HashSet<String>) in.readObject();
-                    for(Object key: cache){
-                        System.out.println(key);
+                    Hashtable<Integer, String> cache = (Hashtable<Integer, String>) in.readObject();
+                    for(Integer key : cache.keySet()){
+                        System.out.println("key = " + key + " value = " + cache.get(key));
                     }
                     fi.close();
                     in.close();

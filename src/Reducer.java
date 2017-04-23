@@ -67,7 +67,12 @@ public class Reducer implements Runnable{
 
                         ArrayList<Tuple> temp_data = (ArrayList<Tuple>)input.readObject();
 
-                        data = (ArrayList<String>)temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(Tuple::getValue).collect(Collectors.toList());
+                        Stream stream = temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(s -> !s.getValue().equals("null") ? s.getValue() : null);
+                        try{
+                            data = (ArrayList<String>)stream.collect(Collectors.toList());
+                        }catch(NullPointerException e){
+                            System.err.println(con.getLocalSocketAddress() + " Stream is empty!");
+                        }
                         System.out.print(System.nanoTime() + " ");
                         data.forEach(System.out::println);
                     }

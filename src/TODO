@@ -1,5 +1,3 @@
 InetAddress.getLocalHost().getHostAddress() == 192.168.56.1
-341288181727573 Sent hi 3330.0Finished
-341288243659760 worker done
-341288244433652 Sent to Reducer
-340835754371375 Sent to Master
+426510900984897
+426510901045406
