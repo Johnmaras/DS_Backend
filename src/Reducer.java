@@ -25,7 +25,6 @@ public class Reducer implements Runnable{
 
     public Reducer(Socket con){
         this.con = con;
-        createFile(temp_file);
     }
 
     /*public String getID(){
