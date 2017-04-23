@@ -3,9 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.DoubleSummaryStatistics;
 import java.util.OptionalDouble;
-import java.util.function.DoubleConsumer;
 
 //TODO handle the master's waiting for connection to reducer
 public class Master implements Runnable{
@@ -34,15 +32,6 @@ public class Master implements Runnable{
         System.out.println(connection.getLocalSocketAddress());
     }
 
-    /*private String getID(){
-        try{
-            return InetAddress.getLocalHost().getHostAddress();
-        }catch(UnknownHostException e){
-            System.err.println(Functions.getTime() + "Unknown Host");
-        }
-        return null;
-    }*/
-
     public void setID(String id){
         this.ID = id;
     }
@@ -64,7 +53,6 @@ public class Master implements Runnable{
                         t.start();
                         try{
                             t.join();
-                            //System.out.println("Finished outer");
                         }catch(InterruptedException e){
                             System.err.println(Functions.getTime() + "Master_run: Interrupted!");
                             e.printStackTrace();
@@ -72,21 +60,7 @@ public class Master implements Runnable{
                         }
                         connectToReducer(functions, query);
                         response = functions.searchCache(query);
-                        /*if(response == null){
-                            t = new Thread(new Master_Worker(query, 2, functions));
-                            t.start();
-                            try{
-                                t.join();
-                                //System.out.println("Finished outer");
-                            }catch(InterruptedException e){
-                                System.err.println(Functions.getTime() + "Master_run: Interrupted! 1");
-                                e.printStackTrace();
-                            }
-                        }
-                        //connectToReducer(functions, query);
-                        response = functions.searchCache(query);*/
                     }
-                    //System.out.println(query + " added.");
                     message = new Message();
                     message.setData(response);
 
@@ -100,7 +74,7 @@ public class Master implements Runnable{
                 if(message.getQuery().equals("Worker")){
                     String worker_id = message.getData().get(0);
                     functions.updateWorkers(worker_id);
-                    System.out.println("Worker " + worker_id + " added.");
+                    System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
                 }else if(message.getQuery().equals("Reducer")){ //0 ip, 1 port
                     Functions.setReducer(message.getData().get(0), message.getData().get(1), config);
                 }
@@ -121,12 +95,12 @@ public class Master implements Runnable{
         Socket ReducerCon = null;
         while(ReducerCon == null){
             try{
-                ReducerCon = new Socket(InetAddress.getByName(Functions.getReducerIP(config)), Functions.getReducerPort(config)); //TODO find creds via config file
+                ReducerCon = new Socket(InetAddress.getByName(Functions.getReducerIP(config)), Functions.getReducerPort(config));
                 ObjectOutputStream out = new ObjectOutputStream(ReducerCon.getOutputStream());
                 Message message = new Message(4, query);
                 out.writeObject(message);
                 out.flush();
-                System.out.println(System.nanoTime() + " Sent to Reducer");
+                System.out.println(Functions.getTime() + " Sent to Reducer");
                 ObjectInputStream in = null;
                 while(in == null){
                     try{
@@ -175,10 +149,9 @@ public class Master implements Runnable{
             ServerSocket listenSocket = new ServerSocket(4000);
             while(true){
                 try{
-                    //accepted connections are only come from the clients
                     Socket new_con = listenSocket.accept();
                     new Thread(new Master(new_con)).start();
-                    System.out.println("Connection accepted: " + new_con.toString());
+                    System.out.println(Functions.getTime() + "Connection accepted: " + new_con.toString());
                 }catch(IOException e){
                     System.err.println(Functions.getTime() + "Master_main: There was an IO error 1");
                 }

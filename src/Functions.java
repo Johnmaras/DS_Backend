@@ -1,6 +1,4 @@
 import java.io.*;
-import java.net.Socket;
-import java.net.SocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -13,7 +11,7 @@ public class Functions{
     private Object node;
 
     private final File cache_file;
-    private Hashtable<String, String> cache; //term(key) and depth in the file(value)
+    private Hashtable<String, String> cache; //term(key) and hash(value)
 
     private final File workers_file; //only the master node has workers file
     private Hashtable<Integer, String> workers;
@@ -65,7 +63,6 @@ public class Functions{
     }
 
     public void updateCache(String query, String h){
-        //String length = Integer.toString(query.length());
         cache.put(query, h);
         try{
             Hashtable<String, String> temp = loadCache();
@@ -175,18 +172,6 @@ public class Functions{
         return false;
     }
 
-    public static void createFile(File file){
-        if(!checkFile(file)){
-            try{
-                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-                writer.write("");
-                writer.close();
-            }catch(IOException e){
-                System.err.println(getTime() + "Functions_createFile: IO Error" + file.getName());
-            }
-        }
-    }
-
     public void clearFiles(){
         clearCache();
         clearWorkers();
@@ -266,22 +251,6 @@ public class Functions{
         }
     }
 
-    public static void setReducerIP(String ip, String config_file){
-        try{
-            Stream<String> file = Files.lines(Paths.get(config_file));
-            List<String> lines = file.collect(Collectors.toList());
-            lines.removeIf(s -> s.startsWith("reducerIP"));
-            lines.add("reducerIP " + ip);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(config_file)));
-            for(String s : lines){
-                writer.write(s);
-                writer.flush();
-            }
-        }catch(IOException e){
-            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
-        }
-    }
-
     public static String getReducerIP(String config_file){
         String reducerIP = null;
         try{
@@ -291,22 +260,6 @@ public class Functions{
             System.err.println(getTime() + "Functions_getMasterIP: IO Error");
         }
         return reducerIP;
-    }
-
-    public static void setReducerPort(String port, String config_file){
-        try{
-            Stream<String> file = Files.lines(Paths.get(config_file));
-            List<String> lines = file.collect(Collectors.toList());
-            lines.removeIf(s -> s.startsWith("reducerPort"));
-            lines.add("reducerPort " + port);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(config_file)));
-            for(String s : lines){
-                writer.write(s);
-                writer.flush();
-            }
-        }catch(IOException e){
-            System.err.println(getTime() + "Functions_setReducerPort: IO Error");
-        }
     }
 
     public static int getReducerPort(String config_file){
@@ -319,11 +272,6 @@ public class Functions{
         }
         return Integer.parseInt(reducerPort);
     }
-
-    private static boolean isEmpty(String line){
-        return line.equals("") || line.trim().startsWith("#");
-    }
-
 
     public static String getTime(){
         return String.format("%d:%d:%d.%d ", LocalDateTime.now().getHour(), 

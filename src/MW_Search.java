@@ -20,7 +20,6 @@ public class MW_Search extends Master_Worker implements Runnable{
     public void run() {
         Message request = new Message(requestType, query);
         try{
-            //System.out.println(worker_id);
             InetSocketAddress worker = new InetSocketAddress(InetAddress.getByName(worker_id), 4002);
             Socket WorkerCon = new Socket();
             WorkerCon.connect(worker, 3000);
@@ -35,7 +34,7 @@ public class MW_Search extends Master_Worker implements Runnable{
                 if(request.getRequestType() == 5){
                     System.out.println(Functions.getTime() + " worker done " + worker_id);
                 }else if(request.getRequestType() == 6){
-                    functions.updateCache(request.getQuery(), request.getData().get(0));//data.get(0) must not contain null
+                    functions.updateCache(request.getQuery(), request.getData().get(0)); //data.get(0) must not contain null
                 }
             }catch(NullPointerException e){
                 System.err.println(Functions.getTime() + "MW_Search_run: Null Pointer!");

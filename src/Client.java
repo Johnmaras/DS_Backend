@@ -3,7 +3,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -18,9 +17,7 @@ public class Client {
         while(true){
             while(MasterCon == null){
                 try {
-                    //System.out.println(Functions.getMasterIP(config));
                     MasterCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
-                    //ID = MasterCon.getLocalSocketAddress().toString();
                 } catch (NullPointerException e) {
                     System.err.println(Functions.getTime() + "Client_main: Null pointer occurred. Trying again");
                 } catch (UnknownHostException e) {

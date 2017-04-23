@@ -3,19 +3,10 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-//TODO each thread creates a connection to a worker, gets the data
-//TODO and stores it into the file(common for all instances).
-//TODO When the main Reducer gets the signal form the master,
-//TODO reads the file and creates a list of all data.
 
-//TODO manage connections' close
 public class Reducer implements Runnable{
 
     private Socket con;
@@ -50,7 +41,7 @@ public class Reducer implements Runnable{
                 o.flush();
                 o.close();
             }else if(request.getRequestType() == 4){
-                ArrayList<String> data = new ArrayList<>(); //there is always one item in the data coming from the workers
+                ArrayList<String> data = new ArrayList<>(); //there is always only one item in the data coming from the workers
                 String query = request.getQuery();
                 try{
                     synchronized(temp_file){
@@ -142,7 +133,6 @@ public class Reducer implements Runnable{
         temp_cache.add(new Tuple(query, h));
         try{
             ArrayList<Tuple> temp = loadCache();
-            //Tuple tuple = new Tuple(request.getQuery(), request.getData().get(0));
             temp_cache.addAll(temp);
             synchronized(temp_file){ //works fine
                 FileOutputStream fo = new FileOutputStream(temp_file);
@@ -183,8 +173,7 @@ public class Reducer implements Runnable{
         Socket handCon = null;
         while(handCon == null){
             try{
-                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config)); //TODO get ip and port from the appropriate Functions' method
-                //ID = ID.substring(ID.indexOf('/') + 1);
+                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
                 Message message = new Message();
                 message.setQuery("Reducer");

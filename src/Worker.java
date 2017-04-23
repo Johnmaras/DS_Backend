@@ -25,15 +25,6 @@ public class Worker implements Runnable{
         return this.ID;
     }
 
-    /*private String getID(){
-        try{
-            return InetAddress.getLocalHost().getHostAddress();
-        }catch(UnknownHostException e){
-            System.err.println(Functions.getTime() + "Unknown Host");
-        }
-        return null;
-    }*/
-
     @Override
     public String toString() {
         return "Worker";
@@ -77,19 +68,10 @@ public class Worker implements Runnable{
             message.setQuery(query[0]);
             message.setData(data);
         }
-        /*if(con.isClosed()){
-            while(con == null){
-                try{
-                    con.connect(con.getRemoteSocketAddress());
-                }catch(IOException e){
-                    System.err.println(Functions.getTime() + "Worker_sendToMaster: There was an IO error 1");
-                }
-            }
-        }*/
         try{
             ObjectOutputStream Masterout = new ObjectOutputStream(con.getOutputStream());
             Masterout.writeObject(message);
-            System.out.println("At " + System.nanoTime() + " sent data: " + message.getData());
+            System.out.println(Functions.getTime() + "Sent data: " + message.getData());
             Masterout.flush();
         }catch (IOException e) {
             System.err.println(Functions.getTime() + "Worker_sendToMaster: There was an IO error");
@@ -106,7 +88,7 @@ public class Worker implements Runnable{
                 ObjectOutputStream ReducerOut = new ObjectOutputStream(Reducercon.getOutputStream());
                 ReducerOut.writeObject(message);
                 ReducerOut.flush();
-                System.out.print(System.nanoTime() + " Sent " + query + " " + data);
+                System.out.print(Functions.getTime() + "Sent " + query + " " + data);
                 ObjectInputStream in = new ObjectInputStream(Reducercon.getInputStream());
                 String string = in.readUTF();
                 if(string.equals("Done")){
@@ -118,7 +100,7 @@ public class Worker implements Runnable{
                 System.err.println(Functions.getTime() + "Worker_sendToReducer: There was an IO error");
             }
         }
-        System.out.println("Finished");
+        System.out.println(Functions.getTime() + "Finished");
     }
 
     private void masterHandshake(){
@@ -126,7 +108,6 @@ public class Worker implements Runnable{
         while(handCon == null){
             try{
                 handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config)); //TODO get ip and port from the appropriate Functions' method
-                //ID = ID.substring(ID.indexOf('/') + 1);
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
                 Message message = new Message();
                 message.setQuery("Worker");
@@ -138,7 +119,7 @@ public class Worker implements Runnable{
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
                 String ack = in.readUTF();
-                System.out.println(ack);
+                System.out.println(Functions.getTime() + ack);
             }catch(NullPointerException e){
                 System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
             }catch(UnknownHostException e){
@@ -155,9 +136,9 @@ public class Worker implements Runnable{
             ServerSocket listenSocket = new ServerSocket(4002);
             while(true){
                 try{
-                    System.out.println("Waiting for connections...");
+                    System.out.println(Functions.getTime() + "Waiting for connections...");
                     Socket connection = listenSocket.accept();
-                    System.out.println("Connection accepted: " + connection.toString());
+                    System.out.println(Functions.getTime() + "Connection accepted: " + connection.toString());
                     new Thread(new Worker(connection)).start();
                 }catch(IOException e){
                     System.err.println(Functions.getTime() + "Worker_main: There was an IO error 1");
