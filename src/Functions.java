@@ -14,7 +14,7 @@ public class Functions{
     private Hashtable<String, String> cache; //term(key) and depth in the file(value)
 
     private final File workers_file; //only the master node has workers file
-    private HashSet<String> workers;
+    private Hashtable<Integer, String> workers;
 
     public Functions(Object node){
         this.node = node;
@@ -24,7 +24,7 @@ public class Functions{
         this.workers = (this.node.toString().equals("Master") ? loadWorkers() : null);
     }
 
-    public HashSet<String> getWorkers(){ return workers;}
+    public Hashtable<Integer, String> getWorkers(){ return workers;}
 
     private Hashtable<String, String> loadCache(){
         createCache();
@@ -88,12 +88,12 @@ public class Functions{
         return cache.get(query);
     }
 
-    private HashSet<String> loadWorkers(){
+    private Hashtable<Integer, String> loadWorkers(){
         createWorkers();
         try{
             synchronized(workers_file) {
                 FileInputStream f = new FileInputStream(workers_file);
-                return (HashSet<String>) new ObjectInputStream(f).readObject();
+                return (Hashtable<Integer, String>) new ObjectInputStream(f).readObject();
             }
         }catch(IOException e){
             System.err.println("Master_loadWorkers: IOException occurred");
@@ -102,12 +102,12 @@ public class Functions{
             System.err.println("Master_loadWorkers: ClassNotFoundException occurred");
             e.printStackTrace();
         }
-        return new HashSet<>();
+        return new Hashtable<>();
     }
 
     private void createWorkers(){
         if(!checkFile(workers_file)){
-            HashSet<String> temp = new HashSet<>();
+            Hashtable<Integer, String> temp = new Hashtable<>();
             try{
                 synchronized(workers_file){
                     FileOutputStream f = new FileOutputStream(workers_file);
@@ -123,10 +123,10 @@ public class Functions{
     }
 
     public void updateWorkers(String worker_id){
-        workers.add(worker_id);
+    workers.put(workers.size() + 1, worker_id);
         try{
-            HashSet<String> temp = loadWorkers();
-            temp.addAll(workers);
+            Hashtable<Integer, String> temp = loadWorkers();
+            temp.putAll(workers);
             synchronized(workers_file){
                 FileOutputStream c = new FileOutputStream(workers_file);
                 ObjectOutputStream out = new ObjectOutputStream(c);
@@ -183,7 +183,7 @@ public class Functions{
 
     public void clearFiles(){
         Hashtable<String, String> master_cache = new Hashtable<>();
-        HashSet<String> master_workers = new HashSet<>();
+        Hashtable<Integer, String> master_workers = new Hashtable<>();
         try{
             synchronized(cache_file){
                 FileOutputStream f = new FileOutputStream(cache_file);
