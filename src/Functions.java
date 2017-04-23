@@ -153,6 +153,8 @@ public class Functions{
             return "master_" + ((Master)node).hash();
         }else if(class_name.equals("Worker")){
             return "worker_" + ((Worker)node).hash();
+        }else if(class_name.equals("Reducer")){
+
         }
         return null;
     }

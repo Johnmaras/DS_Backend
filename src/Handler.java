@@ -13,7 +13,7 @@ public class Handler{
         String input = scanner.nextLine();
         while(!input.equals("quit")){
             if(input.equals("master.cache")){
-                File file = new File("master_192.168.1.67_cache");
+                File file = new File("master_" + new Functions(new Master()) + "_cache");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
@@ -21,7 +21,7 @@ public class Handler{
                     for(String key : cache.keySet()){
                         System.out.println("key = " + key + " value = " + cache.get(key));
                     }
-                    System.out.printf("%d:%d:%d.%d", LocalDateTime.now().getHour(), LocalDateTime.now().getMinute(), LocalDateTime.now().getSecond(), LocalDateTime.now().getNano());
+                    //System.out.printf("%d:%d:%d.%d", LocalDateTime.now().getHour(), LocalDateTime.now().getMinute(), LocalDateTime.now().getSecond(), LocalDateTime.now().getNano());
                     fi.close();
                     in.close();
                 } catch (FileNotFoundException e) {
@@ -32,7 +32,7 @@ public class Handler{
                     System.err.println("Class not found");
                 }
             }else if(input.equals("master.workers")){
-                File file = new File("master_192.168.1.67_workers");
+                File file = new File("master_" + new Functions(new Master()) + "_workers");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
@@ -50,7 +50,7 @@ public class Handler{
                     System.err.println("Class not found");
                 }
             }else if(input.equals("worker")){
-                File file= new File("worker_192.168.1.67_cache");
+                File file= new File("worker_" + new Functions(new Worker(null)) + "_cache");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
@@ -68,7 +68,7 @@ public class Handler{
                     System.err.println("Class not found");
                 }
             }else if(input.equals("reducer")){
-                File file= new File("reducer_192.168.1.67_temp");
+                File file= new File("reducer_" + new Functions(new Reducer(null)) + "_temp");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
