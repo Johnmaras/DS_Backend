@@ -31,7 +31,7 @@ public class Reducer implements Runnable{
         try{
             return InetAddress.getLocalHost().getHostAddress();
         }catch(UnknownHostException e){
-            System.err.println("Reducer_getID: Host not found.");
+            System.err.println(Functions.getTime() + "Reducer_getID: Host not found.");
         }
         return null;
     }*/
@@ -58,7 +58,7 @@ public class Reducer implements Runnable{
                 o.flush();
                 o.close();
             }else if(request.getRequestType() == 4){
-                ArrayList<String> data = new ArrayList<>(); //there is always just one item in the data coming from the workers
+                ArrayList<String> data = new ArrayList<>(); //there is always one item in the data coming from the workers
                 String query = request.getQuery();
                 try{
                     synchronized(temp_file){
@@ -71,28 +71,28 @@ public class Reducer implements Runnable{
                         try{
                             data = (ArrayList<String>)stream.collect(Collectors.toList());
                         }catch(NullPointerException e){
-                            System.err.println(con.getLocalSocketAddress() + " Stream is empty!");
+                            System.err.println(Functions.getTime() + con.getLocalSocketAddress() + " Stream is empty!");
                         }
                         System.out.print(System.nanoTime() + " ");
                         data.forEach(System.out::println);
                     }
                 }catch(FileNotFoundException e){
-                    System.err.println("Reducer_run: File not found");
+                    System.err.println(Functions.getTime() + "Reducer_run: File not found");
                     e.printStackTrace();
                 }
                 sendToMaster(request.getQuery(), data);
                 clearFile(temp_file);
             }
-        }catch(NullPointerException e) {
-            System.err.println("Reducer_run: Null pointer occurred");
+        }catch(NullPointerException e){
+            System.err.println(Functions.getTime() + "Reducer_run: Null pointer occurred");
         }catch(FileNotFoundException e){
-            System.err.println("Reducer_run: File not found!");
+            System.err.println(Functions.getTime() + "Reducer_run: File not found!");
             e.printStackTrace();
         }catch(IOException e){
-            System.err.println("Reducer_run: IOException occurred");
+            System.err.println(Functions.getTime() + "Reducer_run: IOException occurred");
             e.printStackTrace();
-        }catch(ClassNotFoundException e) {
-            System.err.println("Reducer_run: Class not found occurred");
+        }catch(ClassNotFoundException e){
+            System.err.println(Functions.getTime() + "Reducer_run: Class not found occurred");
         }
     }
 
@@ -107,7 +107,7 @@ public class Reducer implements Runnable{
                 out.flush();
                 System.out.println("Sent to Master " + message);
             }catch(IOException e){
-                System.err.println("Reducer_sendToMaster: IOException occurred");
+                System.err.println(Functions.getTime() + "Reducer_sendToMaster: IOException occurred");
                 e.printStackTrace();
             }
         }
@@ -121,10 +121,10 @@ public class Reducer implements Runnable{
                 return (ArrayList<Tuple>) (new ObjectInputStream(f)).readObject();
             }
         }catch(IOException e){
-            System.err.println("Master_loadCache: IOException occurred");
+            System.err.println(Functions.getTime() + "Master_loadCache: IOException occurred");
             e.printStackTrace();
         }catch(ClassNotFoundException e){
-            System.err.println("Master_loadCache: ClassNotFoundException occurred");
+            System.err.println(Functions.getTime() + "Master_loadCache: ClassNotFoundException occurred");
             e.printStackTrace();
         }
         return new ArrayList<>();
@@ -141,7 +141,7 @@ public class Reducer implements Runnable{
                     out.flush();
                 }
             }catch(IOException e){
-                System.err.println("Master_loadCache: IOException occurred");
+                System.err.println(Functions.getTime() + "Master_createCache: IOException occurred");
                 e.printStackTrace();
             }
         }
@@ -163,29 +163,11 @@ public class Reducer implements Runnable{
                 out.close();
             }
         }catch(FileNotFoundException e){
-            System.err.println("Master_updateCache: File Not Found");
+            System.err.println(Functions.getTime() + "Master_updateCache: File Not Found");
             e.printStackTrace();
         }catch(IOException e){
-            System.err.println("Master_updateCache: There was an IO error on openServer");
+            System.err.println(Functions.getTime() + "Master_updateCache: There was an IO error");
             e.printStackTrace();
-        }
-    }
-
-    private void createFile(File file){
-        if(!Functions.checkFile(file)){
-            ArrayList<Tuple> temp = new ArrayList<>();
-            try{
-                synchronized(temp_file){
-                    FileOutputStream f = new FileOutputStream(temp_file);
-                    ObjectOutputStream out = new ObjectOutputStream(f);
-                    out.writeObject(temp);
-                    out.flush();
-                    out.close();
-                }
-            }catch(IOException e){
-                System.err.println("Master_loadCache: IOException occurred");
-                e.printStackTrace();
-            }
         }
     }
 
@@ -201,11 +183,29 @@ public class Reducer implements Runnable{
                     out.close();
                 }
             }catch(IOException e){
-                System.err.println("Master_loadCache: IOException occurred");
+                System.err.println(Functions.getTime() + "Master_loadCache: IOException occurred");
                 e.printStackTrace();
             }
         }
     }
+
+    /*private void createFile(File file){
+        if(!Functions.checkFile(file)){
+            ArrayList<Tuple> temp = new ArrayList<>();
+            try{
+                synchronized(temp_file){
+                    FileOutputStream f = new FileOutputStream(temp_file);
+                    ObjectOutputStream out = new ObjectOutputStream(f);
+                    out.writeObject(temp);
+                    out.flush();
+                    out.close();
+                }
+            }catch(IOException e){
+                System.err.println(Functions.getTime() + "Master_loadCache: IOException occurred");
+                e.printStackTrace();
+            }
+        }
+    }*/
 
     public static void main(String[] args){
         try{
@@ -216,11 +216,11 @@ public class Reducer implements Runnable{
                     Socket connection = listenSocket.accept();
                     new Thread(new Reducer(connection)).start();
                 }catch(IOException e){
-                    System.err.println("Reducer_main: There was an IO error");
+                    System.err.println(Functions.getTime() + "Reducer_main: There was an IO error 1");
                 }
             }
         }catch(IOException e){
-            System.err.println("Reducer_main: There was an IO error");
+            System.err.println(Functions.getTime() + "Reducer_main: There was an IO error 2");
         }
     }
 }

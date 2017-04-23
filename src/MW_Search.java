@@ -40,21 +40,21 @@ public class MW_Search extends Master_Worker implements Runnable{
                     functions.updateCache(request.getQuery(), request.getData().get(0));//data.get(0) must not contain null
                 }
             }catch(NullPointerException e){
-                System.err.println("MW_Search_run: Null Pointer!");
+                System.err.println(Functions.getTime() + "MW_Search_run: Null Pointer!");
                 e.printStackTrace();
             }catch(SocketTimeoutException e){
-                System.err.println("MW_Search_run: Socket Time Out!");
+                System.err.println(Functions.getTime() + "MW_Search_run: Socket Time Out!");
             }catch(ClassNotFoundException e){
-                System.err.println("MW_Search_run: Class Not Found");
+                System.err.println(Functions.getTime() + "MW_Search_run: Class Not Found");
             }
 
         }catch(UnknownHostException e){
-            System.err.println("MW_Search_run: You are trying to connect to an unknown host!");
+            System.err.println(Functions.getTime() + "MW_Search_run: You are trying to connect to an unknown host!");
             e.printStackTrace();
         }catch(IOException e){
-            System.err.println("MW_Search_run: There was an IO error. Host " + worker_id + " seems to be down!");
+            System.err.println(Functions.getTime() + "MW_Search_run: There was an IO error. Host " + worker_id + " seems to be down!");
         }catch(NullPointerException e){
-            System.err.println("MW_Search_run: NullPointer");
+            System.err.println(Functions.getTime() + "MW_Search_run: NullPointer");
             e.printStackTrace();
         }
     }

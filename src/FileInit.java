@@ -31,9 +31,10 @@ public class FileInit{
                 System.out.println("key = " + key + " value = " + data.get(key));
             }
         }catch(FileNotFoundException e){
-            System.err.println("Reducer_run: File not found");
+            System.err.println("File not found");
             e.printStackTrace();
         }catch(IOException e){
+            System.err.println("IO Error");
             e.printStackTrace();
         }
     }

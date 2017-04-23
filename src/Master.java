@@ -37,7 +37,7 @@ public class Master implements Runnable{
         try{
             return InetAddress.getLocalHost().getHostAddress();
         }catch(UnknownHostException e){
-            System.err.println("Unknown Host");
+            System.err.println(Functions.getTime() + "Unknown Host");
         }
         return null;
     }*/
@@ -65,7 +65,7 @@ public class Master implements Runnable{
                             t.join();
                             //System.out.println("Finished outer");
                         }catch(InterruptedException e){
-                            System.err.println("Master_run: Interrupted! 1");
+                            System.err.println(Functions.getTime() + "Master_run: Interrupted!");
                             e.printStackTrace();
                             //TODO break if thread crashes
                         }
@@ -78,7 +78,7 @@ public class Master implements Runnable{
                                 t.join();
                                 //System.out.println("Finished outer");
                             }catch(InterruptedException e){
-                                System.err.println("Master_run: Interrupted! 1");
+                                System.err.println(Functions.getTime() + "Master_run: Interrupted! 1");
                                 e.printStackTrace();
                                 //TODO break if thread crashes
                             }
@@ -105,11 +105,11 @@ public class Master implements Runnable{
                 System.out.println("Worker " + worker_id + " added.");
             }
         }catch(IOException e){
-            System.err.println("Master_run: IO Error");
+            System.err.println(Functions.getTime() + "Master_run: IO Error");
             e.printStackTrace();
             //TODO handle the reset connection error on client connections
         }catch(ClassNotFoundException e){
-            System.err.println("Master_run: Class not found. out");
+            System.err.println(Functions.getTime() + "Master_run: Class not found.");
         }
     }
 
@@ -136,7 +136,7 @@ public class Master implements Runnable{
                                 try{
                                     t.join();
                                 } catch (InterruptedException e) {
-                                    System.err.println("Master_connectToReducer: Interrupted! 2");
+                                    System.err.println(Functions.getTime() + "Master_connectToReducer: Interrupted!");
                                     e.printStackTrace();
                                 }
                             }else{
@@ -147,19 +147,19 @@ public class Master implements Runnable{
                         }
 
                     }catch(NullPointerException e){
-                        System.err.println("Master_connectToReducer: Null Pointer!");
+                        System.err.println(Functions.getTime() + "Master_connectToReducer: Null Pointer!");
                         e.printStackTrace();
                     }catch(SocketTimeoutException e){
-                        System.err.println("Master_connectToReducer: Socket Time Out!");
+                        System.err.println(Functions.getTime() + "Master_connectToReducer: Socket Time Out!");
                     }catch(ClassNotFoundException e){
-                        System.err.println("Master_connectToReducer: Class Not Found. in");
+                        System.err.println(Functions.getTime() + "Master_connectToReducer: Class Not Found. in");
                     }
                 }
                 ReducerCon.close();
             } catch (UnknownHostException e) {
-                System.err.println("Master_connectToReducer: Unknown Host");
+                System.err.println(Functions.getTime() + "Master_connectToReducer: Unknown Host");
             } catch (IOException e) {
-                System.err.println("Master_connectToReducer: IO Error");
+                System.err.println(Functions.getTime() + "Master_connectToReducer: IO Error");
                 e.printStackTrace();
             }
         }
@@ -176,11 +176,11 @@ public class Master implements Runnable{
                     new Thread(new Master(new_con)).start();
                     System.out.println("Connection accepted: " + new_con.toString());
                 }catch(IOException e){
-                    System.err.println("Master_main: There was an IO error 1");
+                    System.err.println(Functions.getTime() + "Master_main: There was an IO error 1");
                 }
             }
         }catch(IOException e){
-            System.err.println("Master_main: There was an IO error 2");
+            System.err.println(Functions.getTime() + "Master_main: There was an IO error 2");
         }
     }
 }

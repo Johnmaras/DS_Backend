@@ -19,11 +19,11 @@ public class Client {
                     MasterCon = new Socket(InetAddress.getByName("192.168.1.67"), 4000);
                     //ID = MasterCon.getLocalSocketAddress().toString();
                 } catch (NullPointerException e) {
-                    System.err.println("Client_main: Null pointer occurred. Trying again");
+                    System.err.println(Functions.getTime() + "Client_main: Null pointer occurred. Trying again");
                 } catch (UnknownHostException e) {
-                    System.err.println("Client_main: You are trying to connect to an unknown host!");
+                    System.err.println(Functions.getTime() + "Client_main: You are trying to connect to an unknown host!");
                 } catch (IOException e) {
-                    System.err.println("Client_main: There was an IO error");
+                    System.err.println(Functions.getTime() + "Client_main: There was an IO error");
                 }
             }
             while(true){
@@ -51,12 +51,12 @@ public class Client {
                     ArrayList<String> data = request.getData();
                     data.forEach(System.out::println);
                 }catch(IOException e){
-                    System.err.println("There was an IO error on openServer");
+                    System.err.println(Functions.getTime() + "There was an IO error on openServer");
                     e.printStackTrace();
                 }catch(NullPointerException e){
-                    System.err.println("Null Pointer!");
+                    System.err.println(Functions.getTime() + "Null Pointer!");
                 }catch(ClassNotFoundException e){
-                    System.err.println("Class Not Found");
+                    System.err.println(Functions.getTime() + "Class Not Found");
                 }
             }
             if(flag) break;

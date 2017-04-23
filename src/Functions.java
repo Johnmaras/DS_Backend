@@ -1,13 +1,14 @@
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Hashtable;
 
 public class Functions{
-    //TODO files seem to not be created
+
     private Object node;
 
     private final File cache_file;
@@ -36,10 +37,10 @@ public class Functions{
                 return (Hashtable<String, String>) (new ObjectInputStream(f)).readObject();
             }
         }catch(IOException e){
-            System.err.println("Master_loadCache: IOException occurred");
+            System.err.println(getTime() + "Master_loadCache: IOException occurred");
             e.printStackTrace();
         }catch(ClassNotFoundException e){
-            System.err.println("Master_loadCache: ClassNotFoundException occurred");
+            System.err.println(getTime() + "Master_loadCache: ClassNotFoundException occurred");
             e.printStackTrace();
         }
         return new Hashtable<>();
@@ -56,7 +57,7 @@ public class Functions{
                     out.flush();
                 }
             }catch(IOException e){
-                System.err.println("Master_loadCache: IOException occurred");
+                System.err.println(getTime() + "Master_loadCache: IOException occurred");
                 e.printStackTrace();
             }
         }
@@ -77,10 +78,10 @@ public class Functions{
                 out.close();
             }
         }catch(FileNotFoundException e){
-            System.err.println("Master_updateCache: File Not Found");
+            System.err.println(getTime() + "Master_updateCache: File Not Found");
             e.printStackTrace();
         }catch(IOException e){
-            System.err.println("Master_updateCache: There was an IO error on openServer");
+            System.err.println(getTime() + "Master_updateCache: There was an IO error");
             e.printStackTrace();
         }
     }
@@ -98,10 +99,10 @@ public class Functions{
                 return (Hashtable<Integer, String>) new ObjectInputStream(f).readObject();
             }
         }catch(IOException e){
-            System.err.println("Master_loadWorkers: IOException occurred");
+            System.err.println(getTime() + "Master_loadWorkers: IOException occurred");
             e.printStackTrace();
         }catch(ClassNotFoundException e){
-            System.err.println("Master_loadWorkers: ClassNotFoundException occurred");
+            System.err.println(getTime() + "Master_loadWorkers: ClassNotFoundException occurred");
             e.printStackTrace();
         }
         return new Hashtable<>();
@@ -118,7 +119,7 @@ public class Functions{
                     out.flush();
                 }
             }catch(IOException e){
-                System.err.println("Master_loadCache: IOException occurred");
+                System.err.println(getTime() + "Master_createWorkers: IOException occurred");
                 e.printStackTrace();
             }
         }
@@ -139,10 +140,10 @@ public class Functions{
                     out.close();
                 }
             }catch(FileNotFoundException e){
-                System.err.println("File not found");
+                System.err.println(getTime() + "Functions_updateWorkers: File not found");
                 e.printStackTrace();
             } catch (IOException e) {
-                System.err.println("IO Error");
+                System.err.println(getTime() + "Functions_updateWorkers: IO Error");
                 e.printStackTrace();
             }
         }
@@ -164,9 +165,9 @@ public class Functions{
             reader.readLine();
             return true;
         }catch(NullPointerException e){
-            System.err.println("Functions_checkFile: File not found " + file.getName());
+            System.err.println(getTime() + "Functions_checkFile: File not found " + file.getName());
         }catch(FileNotFoundException e){
-            System.err.println("Functions_checkFile: Error opening file " + file.getName());
+            System.err.println(getTime() + "Functions_checkFile: Error opening file " + file.getName());
         }catch (IOException e){
             System.out.println("Functions_checkFile: Sudden end. " + file.getName());
         }
@@ -180,7 +181,7 @@ public class Functions{
                 writer.write("");
                 writer.close();
             }catch(IOException e){
-                System.err.println("Functions_createFile: IO Error" + file.getName());
+                System.err.println(getTime() + "Functions_createFile: IO Error" + file.getName());
             }
         }
     }
@@ -201,7 +202,7 @@ public class Functions{
                 out.close();
             }
         }catch(IOException e){
-            System.err.println("Master_loadCache: IOException occurred");
+            System.err.println(getTime() + "Functions_clearCache: IOException occurred");
             e.printStackTrace();
         }
     }
@@ -217,8 +218,15 @@ public class Functions{
                 out.close();
             }
         }catch(IOException e){
-            System.err.println("Master_loadCache: IOException occurred");
+            System.err.println(getTime() + "Functions_clearWorkers: IOException occurred");
             e.printStackTrace();
         }
+    }
+
+    public static String getTime(){
+        return String.format("%d:%d:%d.%d ", LocalDateTime.now().getHour(), 
+                                            LocalDateTime.now().getMinute(), 
+                                            LocalDateTime.now().getSecond(), 
+                                            LocalDateTime.now().getNano());
     }
 }

@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.SocketAddress;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -19,6 +21,7 @@ public class Handler{
                     for(String key : cache.keySet()){
                         System.out.println("key = " + key + " value = " + cache.get(key));
                     }
+                    System.out.printf("%d:%d:%d.%d", LocalDateTime.now().getHour(), LocalDateTime.now().getMinute(), LocalDateTime.now().getSecond(), LocalDateTime.now().getNano());
                     fi.close();
                     in.close();
                 } catch (FileNotFoundException e) {

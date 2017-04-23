@@ -27,7 +27,7 @@ public class Worker implements Runnable{
         try{
             return InetAddress.getLocalHost().getHostAddress();
         }catch(UnknownHostException e){
-            System.err.println("Unknown Host");
+            System.err.println(Functions.getTime() + "Unknown Host");
         }
         return null;
     }*/
@@ -80,7 +80,7 @@ public class Worker implements Runnable{
                 try{
                     con.connect(con.getRemoteSocketAddress());
                 }catch(IOException e){
-                    System.err.println("Worker_sendToMaster: There was an IO error 1");
+                    System.err.println(Functions.getTime() + "Worker_sendToMaster: There was an IO error 1");
                 }
             }
         }*/
@@ -90,7 +90,7 @@ public class Worker implements Runnable{
             System.out.println("At " + System.nanoTime() + " sent data: " + message.getData());
             Masterout.flush();
         }catch (IOException e) {
-            System.err.println("Worker_sendToMaster: There was an IO error 2");
+            System.err.println(Functions.getTime() + "Worker_sendToMaster: There was an IO error");
         }
     }
 
@@ -111,9 +111,9 @@ public class Worker implements Runnable{
                     break;
                 }
             }catch(UnknownHostException e){
-                System.err.println("WM_Search: You are trying to connect to an unknown host!");
+                System.err.println(Functions.getTime() + "Worker_sendToReducer: You are trying to connect to an unknown host!");
             }catch(IOException e){
-                System.err.println("WM_Search: There was an IO error on startClient()");
+                System.err.println(Functions.getTime() + "Worker_sendToReducer: There was an IO error");
             }
         }
         System.out.println("Finished");
@@ -135,11 +135,11 @@ public class Worker implements Runnable{
                 String ack = in.readUTF();
                 System.out.println(ack);
             }catch(NullPointerException e){
-                System.err.println("Worker_masterHandshake: Null pointer occurred. Trying again");
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
             }catch(UnknownHostException e){
-                System.err.println("Worker_masterHandshake: You are trying to connect to an unknown host!");
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: You are trying to connect to an unknown host!");
             }catch(IOException e){
-                System.err.println("Worker_masterHandshake: There was an IO error on openServer");
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
             }
         }
     }
@@ -155,11 +155,11 @@ public class Worker implements Runnable{
                     System.out.println("Connection accepted: " + connection.toString());
                     new Thread(new Worker(connection)).start();
                 }catch(IOException e){
-                    System.err.println("Worker_main: There was an IO error 1");
+                    System.err.println(Functions.getTime() + "Worker_main: There was an IO error 1");
                 }
             }
         }catch(IOException e){
-            System.err.println("Worker_main: There was an IO error 2");
+            System.err.println(Functions.getTime() + "Worker_main: There was an IO error 2");
         }
     }
 }
