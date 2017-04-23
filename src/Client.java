@@ -10,13 +10,16 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args){
+
         Socket MasterCon = null;
-        boolean flag = false;
-        //String ID;
+        boolean flag;
+        String config = "config_client";
+
         while(true){
             while(MasterCon == null){
                 try {
-                    MasterCon = new Socket(InetAddress.getByName("192.168.1.67"), 4000);
+                    //System.out.println(Functions.getMasterIP(config));
+                    MasterCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), 4000);
                     //ID = MasterCon.getLocalSocketAddress().toString();
                 } catch (NullPointerException e) {
                     System.err.println(Functions.getTime() + "Client_main: Null pointer occurred. Trying again");
@@ -27,8 +30,6 @@ public class Client {
                 }
             }
             while(true){
-                //TODO check if connection is still valid
-
                 Scanner scanner = new Scanner(System.in);
                 System.out.print("Give the string you want to search: ");
                 String query = scanner.nextLine();
