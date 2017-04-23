@@ -49,6 +49,7 @@ public class Worker implements Runnable{
                 sendToReducer(query, response);
                 sendToMaster(null);
             }else if(message.getRequestType() == 2){
+
                 String query = message.getQuery();
                 String data = GoogleAPISearch(query);
                 functions.updateCache(query, data);
@@ -62,8 +63,7 @@ public class Worker implements Runnable{
     }
 
     private String GoogleAPISearch(String query){
-        String h = Double.toString(query.hashCode() + Math.random());
-        return h;
+        return Double.toString(query.hashCode() * Math.random());
     }
 
     private void sendToMaster(String data, String... query ){
@@ -75,7 +75,7 @@ public class Worker implements Runnable{
             message.setQuery(query[0]);
             message.setData(data);
         }
-        if(con.isClosed()){
+        /*if(con.isClosed()){
             while(con == null){
                 try{
                     con.connect(con.getRemoteSocketAddress());
@@ -83,10 +83,11 @@ public class Worker implements Runnable{
                     System.err.println("Worker_sendToMaster: There was an IO error 1");
                 }
             }
-        }
+        }*/
         try{
             ObjectOutputStream Masterout = new ObjectOutputStream(con.getOutputStream());
             Masterout.writeObject(message);
+            System.out.println("At " + System.nanoTime() + " sent data: " + message.getData());
             Masterout.flush();
         }catch (IOException e) {
             System.err.println("Worker_sendToMaster: There was an IO error 2");
