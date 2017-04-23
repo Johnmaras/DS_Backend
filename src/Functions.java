@@ -1,11 +1,12 @@
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Functions{
 
@@ -222,6 +223,107 @@ public class Functions{
             e.printStackTrace();
         }
     }
+
+    public static String getMasterIP(String config_file){
+        String masterIP = null;
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            masterIP = file.filter(s -> s.trim().startsWith("masterIP")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+        }
+        return masterIP;
+    }
+
+    public static int getMasterPort(String config_file){
+        String masterPort = "";
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            masterPort = file.filter(s -> s.trim().startsWith("masterPort")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+        }
+        return Integer.parseInt(masterPort);
+    }
+
+    public static void setReducer(String ip, String port, String config_file){
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            List<String> lines = file.collect(Collectors.toList());
+            lines.removeIf(s -> s.startsWith("reducerIP"));
+            lines.add("reducerIP " + ip);
+            lines.removeIf(s -> s.startsWith("reducerPort"));
+            lines.add("reducerPort " + port);
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(config_file)));
+            for(String s : lines){
+                writer.write(s);
+                writer.newLine();
+                writer.flush();
+            }
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+        }
+    }
+
+    public static void setReducerIP(String ip, String config_file){
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            List<String> lines = file.collect(Collectors.toList());
+            lines.removeIf(s -> s.startsWith("reducerIP"));
+            lines.add("reducerIP " + ip);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(config_file)));
+            for(String s : lines){
+                writer.write(s);
+                writer.flush();
+            }
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+        }
+    }
+
+    public static String getReducerIP(String config_file){
+        String reducerIP = null;
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            reducerIP = file.filter(s -> s.trim().startsWith("reducerIP")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+        }
+        return reducerIP;
+    }
+
+    public static void setReducerPort(String port, String config_file){
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            List<String> lines = file.collect(Collectors.toList());
+            lines.removeIf(s -> s.startsWith("reducerPort"));
+            lines.add("reducerPort " + port);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(new File(config_file)));
+            for(String s : lines){
+                writer.write(s);
+                writer.flush();
+            }
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_setReducerPort: IO Error");
+        }
+    }
+
+    public static int getReducerPort(String config_file){
+        String reducerPort = "0";
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            reducerPort = file.filter(s -> s.trim().startsWith("reducerPort")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_getReducerPort: IO Error");
+        }
+        return Integer.parseInt(reducerPort);
+    }
+
+    private static boolean isEmpty(String line){
+        return line.equals("") || line.trim().startsWith("#");
+    }
+
 
     public static String getTime(){
         return String.format("%d:%d:%d.%d ", LocalDateTime.now().getHour(), 

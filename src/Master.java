@@ -7,11 +7,12 @@ import java.util.DoubleSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.function.DoubleConsumer;
 
-//TODO handle the master's waiting for connecting to reducer
+//TODO handle the master's waiting for connection to reducer
 public class Master implements Runnable{
 
     private Socket connection;
     private String ID = "192.168.1.67";
+    private String config = "config_master";
 
     public Master(Socket con){
         this.connection = con;
@@ -80,7 +81,6 @@ public class Master implements Runnable{
                             }catch(InterruptedException e){
                                 System.err.println(Functions.getTime() + "Master_run: Interrupted! 1");
                                 e.printStackTrace();
-                                //TODO break if thread crashes
                             }
                         }
                         //connectToReducer(functions, query);
@@ -97,12 +97,16 @@ public class Master implements Runnable{
                     message = (Message)in.readObject();
                 }while(true);
             }else if(message.getRequestType() == 0){
-                String worker_id = message.getQuery();
-                functions.updateWorkers(worker_id);
+                if(message.getQuery().equals("Worker")){
+                    String worker_id = message.getData().get(0);
+                    functions.updateWorkers(worker_id);
+                    System.out.println("Worker " + worker_id + " added.");
+                }else if(message.getQuery().equals("Reducer")){ //0 ip, 1 port
+                    Functions.setReducer(message.getData().get(0), message.getData().get(1), config);
+                }
                 ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
                 out.writeUTF("Connection Done!");
                 out.flush();
-                System.out.println("Worker " + worker_id + " added.");
             }
         }catch(IOException e){
             System.err.println(Functions.getTime() + "Master_run: IO Error");
@@ -117,7 +121,7 @@ public class Master implements Runnable{
         Socket ReducerCon = null;
         while(ReducerCon == null){
             try{
-                ReducerCon = new Socket(InetAddress.getByName("192.168.1.67"), 4001); //TODO find creds via config file
+                ReducerCon = new Socket(InetAddress.getByName(Functions.getReducerIP(config)), Functions.getReducerPort(config)); //TODO find creds via config file
                 ObjectOutputStream out = new ObjectOutputStream(ReducerCon.getOutputStream());
                 Message message = new Message(4, query);
                 out.writeObject(message);

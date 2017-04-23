@@ -5,11 +5,13 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 public class Worker implements Runnable{
 
     private Socket con;
     private String ID = "192.168.1.67";
+    private String config = "config_worker";
 
     public Worker(Socket con){
         this.con = con;
@@ -123,12 +125,15 @@ public class Worker implements Runnable{
         Socket handCon = null;
         while(handCon == null){
             try{
-                handCon = new Socket(InetAddress.getByName("192.168.1.67"), 4000); //TODO get ip and port from the appropriate Functions' method
-                ID = "192.168.1.67";
+                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config)); //TODO get ip and port from the appropriate Functions' method
                 //ID = ID.substring(ID.indexOf('/') + 1);
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
                 Message message = new Message();
-                message.setQuery(ID);
+                message.setQuery("Worker");
+                ArrayList<String> data = new ArrayList<>();
+                data.add(ID);
+                data.add(Integer.toString(4002));
+                message.setData(data);
                 out.writeObject(message);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());

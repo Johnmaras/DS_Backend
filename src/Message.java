@@ -1,7 +1,6 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
-//TODO use Generics
 public class Message implements Serializable {
 
 	private static final long serialVersionUID = 2314160120198237281L;

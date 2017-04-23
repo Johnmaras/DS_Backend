@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 
-//TODO fix error messages
 //TODO may add acknowledgements
 public class Master_Worker extends Master implements Runnable{
 
@@ -43,15 +42,12 @@ public class Master_Worker extends Master implements Runnable{
                 e.printStackTrace();
             }
         }else if(requestType == 2){
-            //TODO find specific worker
             String worker_id;
             int query_hash = Math.abs(query.hashCode()) % (functions.getWorkers().size());
-            System.out.println(query + " = " + query.hashCode());
-            System.out.println("query_hash " + " = " + query_hash);
+            //System.out.println(query + " = " + query.hashCode());
+            //System.out.println("query_hash " + " = " + query_hash);
             worker_id = functions.getWorkers().get(query_hash) ;
-            System.out.println("worker_id = " + worker_id);
-            //TODO check if it is alive
-            //TODO make connection
+            //System.out.println("worker_id = " + worker_id);
             Thread t = new Thread(new MW_Search(worker_id, query, 2, functions));
             t.start();
             try{
@@ -59,9 +55,6 @@ public class Master_Worker extends Master implements Runnable{
             }catch(InterruptedException e){
                 e.printStackTrace();
             }
-            //TODO send request
-            //TODO get response
-            //TODO update cache
         }
     }
 

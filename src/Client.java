@@ -19,7 +19,7 @@ public class Client {
             while(MasterCon == null){
                 try {
                     //System.out.println(Functions.getMasterIP(config));
-                    MasterCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), 4000);
+                    MasterCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
                     //ID = MasterCon.getLocalSocketAddress().toString();
                 } catch (NullPointerException e) {
                     System.err.println(Functions.getTime() + "Client_main: Null pointer occurred. Trying again");

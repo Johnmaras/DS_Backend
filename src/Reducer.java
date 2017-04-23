@@ -22,19 +22,11 @@ public class Reducer implements Runnable{
     private String ID = "192.168.1.67";
     private final File temp_file = new File("reducer_" + hash() + "_temp");
     private ArrayList<Tuple> temp_cache = loadCache();
+    private String config = "config_reducer";
 
     public Reducer(Socket con){
         this.con = con;
     }
-
-    /*public String getID(){
-        try{
-            return InetAddress.getLocalHost().getHostAddress();
-        }catch(UnknownHostException e){
-            System.err.println(Functions.getTime() + "Reducer_getID: Host not found.");
-        }
-        return null;
-    }*/
 
     public String hash(){
         return this.ID;
@@ -101,7 +93,6 @@ public class Reducer implements Runnable{
         ObjectOutputStream out = null;
         while(out == null){
             try{
-                //TODO check if connection is still alive
                 out = new ObjectOutputStream(con.getOutputStream());
                 out.writeObject(message);
                 out.flush();
@@ -154,7 +145,6 @@ public class Reducer implements Runnable{
             //Tuple tuple = new Tuple(request.getQuery(), request.getData().get(0));
             temp_cache.addAll(temp);
             synchronized(temp_file){ //works fine
-                //TODO merge the existing data
                 FileOutputStream fo = new FileOutputStream(temp_file);
                 ObjectOutputStream out = new ObjectOutputStream(fo);
                 out.writeObject(temp_cache);
@@ -189,25 +179,36 @@ public class Reducer implements Runnable{
         }
     }
 
-    /*private void createFile(File file){
-        if(!Functions.checkFile(file)){
-            ArrayList<Tuple> temp = new ArrayList<>();
+    private void masterHandshake(){
+        Socket handCon = null;
+        while(handCon == null){
             try{
-                synchronized(temp_file){
-                    FileOutputStream f = new FileOutputStream(temp_file);
-                    ObjectOutputStream out = new ObjectOutputStream(f);
-                    out.writeObject(temp);
-                    out.flush();
-                    out.close();
-                }
+                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config)); //TODO get ip and port from the appropriate Functions' method
+                //ID = ID.substring(ID.indexOf('/') + 1);
+                ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
+                Message message = new Message();
+                message.setQuery("Reducer");
+                ArrayList<String> data = new ArrayList<>();
+                data.add(ID);
+                data.add(Integer.toString(4001));
+                message.setData(data);
+                out.writeObject(message);
+                out.flush();
+                ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
+                String ack = in.readUTF();
+                System.out.println(ack);
+            }catch(NullPointerException e){
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
+            }catch(UnknownHostException e){
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: You are trying to connect to an unknown host!");
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Master_loadCache: IOException occurred");
-                e.printStackTrace();
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
             }
         }
-    }*/
+    }
 
     public static void main(String[] args){
+        new Reducer(null).masterHandshake();
         try{
             ServerSocket listenSocket = new ServerSocket(4001);
             while(true){

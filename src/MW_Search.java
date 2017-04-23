@@ -21,7 +21,6 @@ public class MW_Search extends Master_Worker implements Runnable{
         Message request = new Message(requestType, query);
         try{
             //System.out.println(worker_id);
-            //TODO take long to throw exception. make it faster. DONE
             InetSocketAddress worker = new InetSocketAddress(InetAddress.getByName(worker_id), 4002);
             Socket WorkerCon = new Socket();
             WorkerCon.connect(worker, 3000);
@@ -33,9 +32,8 @@ public class MW_Search extends Master_Worker implements Runnable{
             try{
                 ObjectInputStream in = new ObjectInputStream(WorkerCon.getInputStream());
                 request = (Message)in.readObject();
-                //System.out.println("Read message at: " + System.nanoTime());
                 if(request.getRequestType() == 5){
-                    System.out.println(System.nanoTime() + " worker done " + worker_id);
+                    System.out.println(Functions.getTime() + " worker done " + worker_id);
                 }else if(request.getRequestType() == 6){
                     functions.updateCache(request.getQuery(), request.getData().get(0));//data.get(0) must not contain null
                 }
