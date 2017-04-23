@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Hashtable;
 
@@ -149,9 +150,6 @@ public class Functions{
             return "master_" + ((Master)node).hash();
         }else if(class_name.equals("Worker")){
             return "worker_" + ((Worker)node).hash();
-        }else if(class_name.equals("Reducer")){
-            //TODO reducer
-            //return "reducer_" + ((Reducer)node).hash();
         }
         return null;
     }
@@ -180,6 +178,29 @@ public class Functions{
             }catch(IOException e){
                 System.err.println("Functions_createFile: IO Error" + file.getName());
             }
+        }
+    }
+
+    public void clearFiles(){
+        Hashtable<String, String> master_cache = new Hashtable<>();
+        HashSet<String> master_workers = new HashSet<>();
+        try{
+            synchronized(cache_file){
+                FileOutputStream f = new FileOutputStream(cache_file);
+                ObjectOutputStream out = new ObjectOutputStream(f);
+                out.writeObject(master_cache);
+                out.flush();
+                out.close();
+            }synchronized(workers_file){
+                FileOutputStream f = new FileOutputStream(workers_file);
+                ObjectOutputStream out = new ObjectOutputStream(f);
+                out.writeObject(master_workers);
+                out.flush();
+                out.close();
+            }
+        }catch(IOException e){
+            System.err.println("Master_loadCache: IOException occurred");
+            e.printStackTrace();
         }
     }
 }
