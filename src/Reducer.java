@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 public class Reducer implements Runnable{
 
     private Socket con;
-    private String ID = "192.168.1.67";
+    private String ID = "10.25.199.229";
     private final File temp_file = new File("reducer_" + hash() + "_temp");
     private ArrayList<Tuple> temp_cache = loadCache();
     private String config = "config_reducer";

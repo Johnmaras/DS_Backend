@@ -9,7 +9,7 @@ public class Handler{
         String input = scanner.nextLine();
         while(!input.equals("quit")){
             if(input.equals("master.cache")){
-                File file = new File("master_" + new Functions(new Master()) + "_cache");
+                File file = new File(new Functions(new Master()).hash() + "_cache");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
@@ -28,7 +28,7 @@ public class Handler{
                     System.err.println("Class not found");
                 }
             }else if(input.equals("master.workers")){
-                File file = new File("master_" + new Functions(new Master()) + "_workers");
+                File file = new File(new Functions(new Master()).hash() + "_workers");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
@@ -46,7 +46,7 @@ public class Handler{
                     System.err.println("Class not found");
                 }
             }else if(input.equals("worker")){
-                File file= new File("worker_" + new Functions(new Worker(null)) + "_cache");
+                File file= new File(new Functions(new Worker(null)).hash() + "_cache");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);
@@ -64,7 +64,7 @@ public class Handler{
                     System.err.println("Class not found");
                 }
             }else if(input.equals("reducer")){
-                File file= new File("reducer_" + new Functions(new Reducer(null)) + "_temp");
+                File file= new File(new Functions(new Reducer(null)).hash() + "_temp");
                 try {
                     FileInputStream fi = new FileInputStream(file);
                     ObjectInputStream in = new ObjectInputStream(fi);

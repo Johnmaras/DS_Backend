@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class Worker implements Runnable{
 
     private Socket con;
-    private String ID = "192.168.1.67";
+    private String ID = "10.25.199.229";
     private String config = "config_worker";
 
     public Worker(Socket con){
@@ -84,7 +84,7 @@ public class Worker implements Runnable{
         Socket Reducercon = null;
         while(Reducercon == null) {
             try {
-                Reducercon = new Socket(InetAddress.getByName("192.168.1.67"), 4001);
+                Reducercon = new Socket(InetAddress.getByName("10.25.199.229"), 4001);
                 ObjectOutputStream ReducerOut = new ObjectOutputStream(Reducercon.getOutputStream());
                 ReducerOut.writeObject(message);
                 ReducerOut.flush();

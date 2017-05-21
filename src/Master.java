@@ -9,7 +9,7 @@ import java.util.OptionalDouble;
 public class Master implements Runnable{
 
     private Socket connection;
-    private String ID = "192.168.1.67";
+    private String ID = "10.25.199.229";
     private String config = "config_master";
 
     public Master(Socket con){
