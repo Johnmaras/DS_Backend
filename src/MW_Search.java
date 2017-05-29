@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
 
+//FIXME finish the refactoring
 public class MW_Search extends Master_Worker implements Runnable{
 
     private String worker_id;
@@ -34,7 +35,7 @@ public class MW_Search extends Master_Worker implements Runnable{
                 if(request.getRequestType() == 5){
                     System.out.println(Functions.getTime() + " worker done " + worker_id);
                 }else if(request.getRequestType() == 6){
-                    functions.updateCache(request.getQuery(), request.getData().get(0)); //data.get(0) must not contain null
+                    functions.updateCache(request.getQuery(), request.getResults().get(0)); //data.get(0) must not contain null
                 }
             }catch(NullPointerException e){
                 System.err.println(Functions.getTime() + "MW_Search_run: Null Pointer!");

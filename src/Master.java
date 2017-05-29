@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.OptionalDouble;
 
 //TODO handle the master's waiting for connection to reducer
+
+//FIXME finish the refactoring
 public class Master implements Runnable{
 
     private Socket connection;
@@ -72,11 +74,11 @@ public class Master implements Runnable{
                 }while(true);
             }else if(message.getRequestType() == 0){
                 if(message.getQuery().equals("Worker")){
-                    String worker_id = message.getData().get(0);
+                    String worker_id = message.getResults().get(0);
                     functions.updateWorkers(worker_id);
                     System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
                 }else if(message.getQuery().equals("Reducer")){ //0 ip, 1 port
-                    Functions.setReducer(message.getData().get(0), message.getData().get(1), config);
+                    Functions.setReducer(message.getResults().get(0), message.getResults().get(1), config);
                 }
                 ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
                 out.writeUTF("Connection Done!");
@@ -107,7 +109,7 @@ public class Master implements Runnable{
                         in = new ObjectInputStream(ReducerCon.getInputStream());
                         message = (Message)in.readObject();
                         if(message.getRequestType() == 8){
-                            if(message.getData().isEmpty()){
+                            if(message.getResults().isEmpty()){
                                 //join is needed to be sure that Master_Worker has updated the cache
                                 Thread t = new Thread((new Master_Worker(message.getQuery(), 2, functions)));
                                 t.start();
@@ -118,7 +120,7 @@ public class Master implements Runnable{
                                     e.printStackTrace();
                                 }
                             }else{
-                                ArrayList<String> data = message.getData();
+                                ArrayList<String> data = message.getResults();
                                 OptionalDouble max = data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
                                 if(max.isPresent()) functions.updateCache(message.getQuery(), Double.toString(max.getAsDouble()));
                             }

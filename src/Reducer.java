@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+//FIXME finish the refactoring
 public class Reducer implements Runnable{
 
     private Socket con;
@@ -35,7 +36,7 @@ public class Reducer implements Runnable{
             Message request = (Message)in.readObject();
             if(request.getRequestType() == 7){
                 //TODO use reduce method
-                updateCache(request.getQuery(), request.getData().get(0));
+                updateCache(request.getQuery(), request.getResults().get(0));
                 ObjectOutputStream o = new ObjectOutputStream(con.getOutputStream());
                 o.writeUTF("Done");
                 o.flush();
@@ -180,7 +181,7 @@ public class Reducer implements Runnable{
                 ArrayList<String> data = new ArrayList<>();
                 data.add(ID);
                 data.add(Integer.toString(4001));
-                message.setData(data);
+                message.setResults(data);
                 out.writeObject(message);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());

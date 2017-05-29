@@ -1,17 +1,17 @@
 master
     1 worker: search locally for the route
     2 worker: search Google API for the route
-    3 client: get the data
+    3 client: get the results
     4 reducer: start the reduce process
 
 worker
     0 master: handshake
     5 master: done my part(sent to reducer)
-    6 master: get the data
-    7 reducer: get the data
+    6 master: get the results
+    7 reducer: get the results
 
 reducer
-    8 master: get the data
+    8 master: get the results
 
 client
     9 master: search for route

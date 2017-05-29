@@ -46,7 +46,7 @@ public class Client {
                     System.out.println("Waiting for the answer");
                     ObjectInputStream in = new ObjectInputStream(MasterCon.getInputStream());
                     request = (Message)in.readObject();
-                    ArrayList<String> data = request.getData();
+                    ArrayList<String> data = request.getResults();
                     data.forEach(System.out::println);
                 }catch(IOException e){
                     System.err.println(Functions.getTime() + "There was an IO error on openServer");

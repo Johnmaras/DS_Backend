@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+//FIXME finish the refactoring
 public class Worker implements Runnable{
 
     private Socket con;
@@ -66,12 +67,12 @@ public class Worker implements Runnable{
         }else{
             message.setRequestType(6);
             message.setQuery(query[0]);
-            message.setData(data);
+            message.setResults(data);
         }
         try{
             ObjectOutputStream Masterout = new ObjectOutputStream(con.getOutputStream());
             Masterout.writeObject(message);
-            System.out.println(Functions.getTime() + "Sent data: " + message.getData());
+            System.out.println(Functions.getTime() + "Sent data: " + message.getResults());
             Masterout.flush();
         }catch (IOException e) {
             System.err.println(Functions.getTime() + "Worker_sendToMaster: There was an IO error");
@@ -114,7 +115,7 @@ public class Worker implements Runnable{
                 ArrayList<String> data = new ArrayList<>();
                 data.add(ID);
                 data.add(Integer.toString(4002));
-                message.setData(data);
+                message.setResults(data);
                 out.writeObject(message);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
