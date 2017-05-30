@@ -5,16 +5,16 @@ public class Message implements Serializable{
 
 	private static final long serialVersionUID = 2314160120198237281L;
 	private int requestType;
-	private ArrayList<LatLngAdapter> query;
-	private ArrayList<PolylineAdapter> results = new ArrayList<>();
+	private String query;
+	private ArrayList<String> results = new ArrayList<>();
 
-	public Message(int requestType, ArrayList<LatLngAdapter> query, ArrayList<PolylineAdapter> results){
+	public Message(int requestType, String query, ArrayList<String> results){
 		this.requestType = requestType;
 		this.query = query;
 		this.results = results;
 	}
 
-	public Message(int requestType, ArrayList<LatLngAdapter> query){
+	public Message(int requestType, String query){
 		this.requestType = requestType;
 		this.query = query;
 	}
@@ -24,11 +24,11 @@ public class Message implements Serializable{
 		this.query = null;
 	}
 
-	public ArrayList<LatLngAdapter> getQuery() {
+	public String getQuery() {
 		return query;
 	}
 
-	public void setQuery(ArrayList<LatLngAdapter> query) {
+	public void setQuery(String query) {
 		this.query = query;
 	}
 
@@ -40,21 +40,21 @@ public class Message implements Serializable{
 		this.requestType = requestType;
 	}
 
-	public ArrayList<PolylineAdapter> getResults() {
+	public ArrayList<String> getResults() {
 		return results;
 	}
 
-	public void setResults(ArrayList<PolylineAdapter> results) {
+	public void setResults(ArrayList<String> results) {
 		this.results = results;
 	}
 
-	public void setResults(PolylineAdapter results){
+	public void setResults(String results){
 		this.results.add(results);
 	}
 
 	public String toString(){
 		String rt = requestType + " - ";
-		for(PolylineAdapter s: results){
+		for(String s: results){
 			rt += s + "_";
 		}
 		return rt;

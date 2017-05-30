@@ -64,7 +64,7 @@ public class Master implements Runnable{
                         response = functions.searchCache(query);
                     }
                     message = new Message();
-                    message.setData(response);
+                    message.setResults(response);
 
                     ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
                     out.writeObject(message);
