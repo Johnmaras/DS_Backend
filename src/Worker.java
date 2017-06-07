@@ -139,13 +139,19 @@ public class Worker implements Runnable{
                 message.setQuery("Worker");
                 ArrayList<String> data = new ArrayList<>();
                 data.add(ID);
-                data.add(Integer.toString(4002));
+                data.add(Integer.toString(getPort()));
                 message.setResults(data);
                 out.writeObject(message);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
-                String ack = in.readUTF();
-                System.out.println(Functions.getTime() + ack);
+                while(!in.readBoolean()){
+                    System.out.println(Functions.getTime() + "Reducer has not connected yet. Waiting...");
+                }
+                String reducerIp = in.readUTF();
+                String reducerPort = Integer.toString(in.readInt());
+
+                Functions.setReducer(reducerIp, reducerPort, config);
+                System.out.println(Functions.getTime() + "Handshake Done!");
             }catch(NullPointerException e){
                 System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
             }catch(UnknownHostException e){
