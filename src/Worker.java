@@ -113,11 +113,11 @@ public class Worker implements Runnable{
         Socket Reducercon = null;
         while(Reducercon == null) {
             try {
-                Reducercon = new Socket(InetAddress.getByName("192.168.1.70"), 4001);
+                Reducercon = new Socket(InetAddress.getByName(Functions.getReducerIP(config)), Functions.getReducerPort(config));
                 ObjectOutputStream ReducerOut = new ObjectOutputStream(Reducercon.getOutputStream());
                 ReducerOut.writeObject(message);
                 ReducerOut.flush();
-                System.out.print(Functions.getTime() + "Sent " + query + " " + data);
+                System.out.println(Functions.getTime() + "Sent " + query + " " + data);
                 ObjectInputStream in = new ObjectInputStream(Reducercon.getInputStream());
                 if(in.readBoolean()) break;
             }catch(UnknownHostException e){
@@ -144,19 +144,24 @@ public class Worker implements Runnable{
                 out.writeObject(message);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
+                int i = 0;
                 while(!in.readBoolean()){
-                    System.out.println(Functions.getTime() + "Reducer has not connected yet. Waiting...");
+                    if(i % 100000 == 0){
+                        System.out.println(Functions.getTime() + "Reducer has not connected yet. Waiting..." + i);
+                    }
+                    i++;
                 }
                 String reducerIp = in.readUTF();
-                String reducerPort = Integer.toString(in.readInt());
+                String reducerPort = in.readUTF();
 
                 Functions.setReducer(reducerIp, reducerPort, config);
-                System.out.println(Functions.getTime() + "Handshake Done!");
+                System.out.println(Functions.getTime() + "Handshake Done! " + reducerIp + " " + reducerPort);
             }catch(NullPointerException e){
                 System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
             }catch(UnknownHostException e){
                 System.err.println(Functions.getTime() + "Worker_masterHandshake: You are trying to connect to an unknown host!");
             }catch(IOException e){
+                e.printStackTrace();
                 System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
             }
         }
