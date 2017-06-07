@@ -1,8 +1,7 @@
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.OptionalDouble;
 
 //TODO handle the master's waiting for connection to reducer
@@ -11,8 +10,14 @@ import java.util.OptionalDouble;
 public class Master implements Runnable{
 
     private Socket connection;
-    private String ID = "10.25.199.229";
+    private static String ID = "192.168.1.70";
     private String config = "config_master";
+
+    private static final File cache_file = new File("master_" + hash() + "_cache");;
+    private static final Hashtable<String, String> cache = new Hashtable<>(); //term(key) and hash(value)
+
+    private static final File workers_file = new File("master_" + hash() + "_workers"); //only the master node has workers file
+    private static final Hashtable<Integer, String> workers = new Hashtable<>();
 
     public Master(Socket con){
         this.connection = con;
@@ -20,9 +25,13 @@ public class Master implements Runnable{
 
     public Master(){}
 
-    public String hash(){
-        return this.ID;
+    public static String hash(){
+        return ID;
     }
+
+    protected static Hashtable<String, String> getCache(){ return cache;}
+
+    protected static Hashtable<Integer, String> getWorkers(){ return workers;}
 
     @Override
     public String toString() {
@@ -34,13 +43,12 @@ public class Master implements Runnable{
         System.out.println(connection.getLocalSocketAddress());
     }
 
-    public void setID(String id){
+    /*public void setID(String id){
         this.ID = id;
-    }
+    }*/
 
     @Override
     public void run() {
-        Functions functions = new Functions(this);
         try{
             ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
             Message message = (Message)in.readObject();
@@ -49,9 +57,10 @@ public class Master implements Runnable{
                 do{
                     query = message.getQuery();
                     if(query.equals("quit")) break;
-                    String response = functions.searchCache(query);
+                    String response = searchCache(query);
                     if(response == null){
-                        Thread t = new Thread(new Master_Worker(query, 1, functions));
+                        //Thread t = new Thread(new Master_Worker(query, 1, functions));
+                        Thread t = new Thread(new Master_Worker(query, 1));
                         t.start();
                         try{
                             t.join();
@@ -60,8 +69,8 @@ public class Master implements Runnable{
                             e.printStackTrace();
                             //TODO break if thread crashes
                         }
-                        connectToReducer(functions, query);
-                        response = functions.searchCache(query);
+                        connectToReducer(query);
+                        response = searchCache(query);
                     }
                     message = new Message();
                     message.setResults(response);
@@ -75,7 +84,7 @@ public class Master implements Runnable{
             }else if(message.getRequestType() == 0){
                 if(message.getQuery().equals("Worker")){
                     String worker_id = message.getResults().get(0);
-                    functions.updateWorkers(worker_id);
+                    updateWorkers(worker_id);
                     System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
                 }else if(message.getQuery().equals("Reducer")){ //0 ip, 1 port
                     Functions.setReducer(message.getResults().get(0), message.getResults().get(1), config);
@@ -93,7 +102,7 @@ public class Master implements Runnable{
         }
     }
 
-    private void connectToReducer(Functions functions, String query){
+    private void connectToReducer(String query){
         Socket ReducerCon = null;
         while(ReducerCon == null){
             try{
@@ -111,7 +120,7 @@ public class Master implements Runnable{
                         if(message.getRequestType() == 8){
                             if(message.getResults().isEmpty()){
                                 //join is needed to be sure that Master_Worker has updated the cache
-                                Thread t = new Thread((new Master_Worker(message.getQuery(), 2, functions)));
+                                Thread t = new Thread((new Master_Worker(message.getQuery(), 2)));
                                 t.start();
                                 try{
                                     t.join();
@@ -122,7 +131,7 @@ public class Master implements Runnable{
                             }else{
                                 ArrayList<String> data = message.getResults();
                                 OptionalDouble max = data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
-                                if(max.isPresent()) functions.updateCache(message.getQuery(), Double.toString(max.getAsDouble()));
+                                if(max.isPresent()) updateCache(message.getQuery(), Double.toString(max.getAsDouble()));
                             }
                         }
 
@@ -145,8 +154,65 @@ public class Master implements Runnable{
         }
     }
 
+    //-----DATA RELATED METHODS-----
+    public void updateCache(String query, String h){
+        synchronized (cache){
+            cache.put(query, h);
+        }
+        //redundant
+        /*try{
+            Hashtable<String, String> temp = loadCache();
+            cache.putAll(temp);
+            synchronized(cache_file){
+                FileOutputStream c = new FileOutputStream(cache_file);
+                ObjectOutputStream out = new ObjectOutputStream(c);
+                out.writeObject(cache);
+                out.flush();
+                c.close();
+                out.close();
+            }
+        }catch(FileNotFoundException e){
+            System.err.println(getTime() + "Master_updateCache: File Not Found");
+            e.printStackTrace();
+        }catch(IOException e){
+            System.err.println(getTime() + "Master_updateCache: There was an IO error");
+            e.printStackTrace();
+        }*/
+    }
+
+    public String searchCache(String query){
+        //cache = loadCache();
+        return cache.get(query);
+    }
+
+    public void updateWorkers(String worker_id){
+        synchronized (workers){
+            if(!workers.contains(worker_id)){
+                workers.put(workers.size(), worker_id);
+            /*try{
+                Hashtable<Integer, String> temp = loadWorkers();
+                temp.putAll(workers);
+                synchronized (workers_file) {
+                    FileOutputStream c = new FileOutputStream(workers_file);
+                    ObjectOutputStream out = new ObjectOutputStream(c);
+                    out.writeObject(temp);
+                    out.flush();
+                    c.close();
+                    out.close();
+                }
+            }catch(FileNotFoundException e){
+                System.err.println(Functions.getTime() + "Functions_updateWorkers: File not found");
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.err.println(Functions.getTime() + "Functions_updateWorkers: IO Error");
+                e.printStackTrace();
+            }*/
+            }
+        }
+    }
+
     public static void main(String[] args){
-        new Functions(new Master()).clearFiles();
+        //new Functions(new Master()).clearFiles();
         try{
             ServerSocket listenSocket = new ServerSocket(4000);
             while(true){

@@ -9,27 +9,27 @@ import java.util.stream.Stream;
 
 public class Functions{
 
-    private Object node;
+    //private Object node;
 
-    private final File cache_file;
+    /*private final File cache_file;
     private Hashtable<String, String> cache; //term(key) and hash(value)
 
     private final File workers_file; //only the master node has workers file
-    private Hashtable<Integer, String> workers;
+    private Hashtable<Integer, String> workers;*/
 
-    public Functions(Object node){
+    /*public Functions(Object node){
         this.node = node;
         this.cache_file = new File(hash() + "_cache");
         this.cache = loadCache();
         this.workers_file = (this.node.toString().equals("Master") ? new File(hash() + "_workers") : null);
         this.workers = (this.node.toString().equals("Master") ? loadWorkers() : null);
-    }
+    }*/
 
-    public Hashtable<Integer, String> getWorkers(){
+    /*public Hashtable<Integer, String> getWorkers(){
         return loadWorkers();
-    }
+    }*/
 
-    private Hashtable<String, String> loadCache(){
+    /*private Hashtable<String, String> loadCache(){
         createCache();
         try{
             synchronized(cache_file){
@@ -44,9 +44,9 @@ public class Functions{
             e.printStackTrace();
         }
         return new Hashtable<>();
-    }
+    }*/
 
-    private void createCache(){
+    /*private void createCache(){
         if(!checkFile(cache_file)){
             Hashtable<String, String> temp = new Hashtable<>();
             try{
@@ -61,36 +61,9 @@ public class Functions{
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
-    public void updateCache(String query, String h){
-        cache.put(query, h);
-        try{
-            Hashtable<String, String> temp = loadCache();
-            cache.putAll(temp);
-            synchronized(cache_file){
-                FileOutputStream c = new FileOutputStream(cache_file);
-                ObjectOutputStream out = new ObjectOutputStream(c);
-                out.writeObject(cache);
-                out.flush();
-                c.close();
-                out.close();
-            }
-        }catch(FileNotFoundException e){
-            System.err.println(getTime() + "Master_updateCache: File Not Found");
-            e.printStackTrace();
-        }catch(IOException e){
-            System.err.println(getTime() + "Master_updateCache: There was an IO error");
-            e.printStackTrace();
-        }
-    }
-
-    public String searchCache(String query){
-        cache = loadCache();
-        return cache.get(query);
-    }
-
-    private Hashtable<Integer, String> loadWorkers(){
+    /*private Hashtable<Integer, String> loadWorkers(){
         createWorkers();
         try{
             synchronized(workers_file) {
@@ -105,9 +78,9 @@ public class Functions{
             e.printStackTrace();
         }
         return new Hashtable<>();
-    }
+    }*/
 
-    private void createWorkers(){
+    /*private void createWorkers(){
         if(!checkFile(workers_file)){
             Hashtable<Integer, String> temp = new Hashtable<>();
             try{
@@ -122,33 +95,9 @@ public class Functions{
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
-    public void updateWorkers(String worker_id){
-        if(!workers.contains(worker_id)){
-            workers.put(workers.size(), worker_id);
-            try{
-                Hashtable<Integer, String> temp = loadWorkers();
-                temp.putAll(workers);
-                synchronized (workers_file) {
-                    FileOutputStream c = new FileOutputStream(workers_file);
-                    ObjectOutputStream out = new ObjectOutputStream(c);
-                    out.writeObject(temp);
-                    out.flush();
-                    c.close();
-                    out.close();
-                }
-            }catch(FileNotFoundException e){
-                System.err.println(getTime() + "Functions_updateWorkers: File not found");
-                e.printStackTrace();
-            } catch (IOException e) {
-                System.err.println(getTime() + "Functions_updateWorkers: IO Error");
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public String hash(){
+    /*public String hash(){
         String class_name = this.node.toString();
         if(class_name.equals("Master")){
             return "master_" + ((Master)node).hash();
@@ -158,7 +107,7 @@ public class Functions{
 
         }
         return null;
-    }
+    }*/
 
     public static boolean checkFile(File file){
         try{
@@ -175,12 +124,12 @@ public class Functions{
         return false;
     }
 
-    public void clearFiles(){
+    /*public void clearFiles(){
         clearCache();
         clearWorkers();
-    }
+    }*/
 
-    public void clearCache(){
+    /*public void clearCache(){
         Hashtable<String, String> master_cache = new Hashtable<>();
         try{
             synchronized(cache_file){
@@ -194,9 +143,9 @@ public class Functions{
             System.err.println(getTime() + "Functions_clearCache: IOException occurred");
             e.printStackTrace();
         }
-    }
+    }*/
 
-    public void clearWorkers(){
+    /*public void clearWorkers(){
         Hashtable<Integer, String> master_workers = new Hashtable<>();
         try{
             synchronized(workers_file){
@@ -210,7 +159,7 @@ public class Functions{
             System.err.println(getTime() + "Functions_clearWorkers: IOException occurred");
             e.printStackTrace();
         }
-    }
+    }*/
 
     public static String getMasterIP(String config_file){
         String masterIP = null;

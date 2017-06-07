@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 public class Reducer implements Runnable{
 
     private Socket con;
-    private String ID = "10.25.199.229";
+    private String ID = "192.168.1.70";
     private final File temp_file = new File("reducer_" + hash() + "_temp");
     private ArrayList<Tuple> temp_cache = loadCache();
     private String config = "config_reducer";
@@ -88,7 +88,7 @@ public class Reducer implements Runnable{
                 out = new ObjectOutputStream(con.getOutputStream());
                 out.writeObject(message);
                 out.flush();
-                System.out.println("Sent to Master " + message);
+                System.out.println("Sent to Master " + message.getResults());
             }catch(IOException e){
                 System.err.println(Functions.getTime() + "Reducer_sendToMaster: IOException occurred");
                 e.printStackTrace();

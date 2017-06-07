@@ -9,13 +9,11 @@ public class MW_Search extends Master_Worker implements Runnable{
     private String worker_id;
     private String query;
     private int requestType;
-    private Functions functions;
 
-    public MW_Search(String worker_id, String query, int requestType, Functions functions) {
+    public MW_Search(String worker_id, String query, int requestType) {
         this.worker_id = worker_id;
         this.query = query;
         this.requestType = requestType;
-        this.functions = functions;
     }
     @Override
     public void run() {
@@ -35,7 +33,7 @@ public class MW_Search extends Master_Worker implements Runnable{
                 if(request.getRequestType() == 5){
                     System.out.println(Functions.getTime() + " worker done " + worker_id);
                 }else if(request.getRequestType() == 6){
-                    functions.updateCache(request.getQuery(), request.getResults().get(0)); //data.get(0) must not contain null
+                    updateCache(request.getQuery(), request.getResults().get(0)); //data.get(0) must not contain null
                 }
             }catch(NullPointerException e){
                 System.err.println(Functions.getTime() + "MW_Search_run: Null Pointer!");

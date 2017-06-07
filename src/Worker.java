@@ -6,13 +6,17 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 //FIXME finish the refactoring
 public class Worker implements Runnable{
 
     private Socket con;
-    private String ID = "10.25.199.229";
+    private String ID = "192.168.1.70";
     private String config = "config_worker";
+
+    private static final Hashtable<String, String> cache = new Hashtable<>(); //term(key) and hash(value)
+
 
     public Worker(Socket con){
         this.con = con;
@@ -33,20 +37,20 @@ public class Worker implements Runnable{
 
     @Override
     public void run() {
-        Functions functions = new Functions(this);
+        //Functions functions = new Functions(this);
         try{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 1){
                 String query = message.getQuery();
-                String response = functions.searchCache(query);
+                String response = searchCache(query);
                 sendToReducer(query, response);
                 sendToMaster(null);
             }else if(message.getRequestType() == 2){
 
                 String query = message.getQuery();
                 String data = GoogleAPISearch(query);
-                functions.updateCache(query, data);
+                updateCache(query, data);
                 sendToMaster(data, query);
             }
         }catch(IOException e){
@@ -81,11 +85,11 @@ public class Worker implements Runnable{
 
     private void sendToReducer(String query, String data){
         Message message = new Message(7, query);
-        message.setData(data);
+        message.setResults(data);
         Socket Reducercon = null;
         while(Reducercon == null) {
             try {
-                Reducercon = new Socket(InetAddress.getByName("10.25.199.229"), 4001);
+                Reducercon = new Socket(InetAddress.getByName("192.168.1.70"), 4001);
                 ObjectOutputStream ReducerOut = new ObjectOutputStream(Reducercon.getOutputStream());
                 ReducerOut.writeObject(message);
                 ReducerOut.flush();
@@ -108,7 +112,7 @@ public class Worker implements Runnable{
         Socket handCon = null;
         while(handCon == null){
             try{
-                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config)); //TODO get ip and port from the appropriate Functions' method
+                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
                 Message message = new Message();
                 message.setQuery("Worker");
@@ -129,6 +133,37 @@ public class Worker implements Runnable{
                 System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
             }
         }
+    }
+
+    //-----DATA RELATED METHODS-----
+    public void updateCache(String query, String h){
+        synchronized (cache){
+            cache.put(query, h);
+        }
+        //redundant
+        /*try{
+            Hashtable<String, String> temp = loadCache();
+            cache.putAll(temp);
+            synchronized(cache_file){
+                FileOutputStream c = new FileOutputStream(cache_file);
+                ObjectOutputStream out = new ObjectOutputStream(c);
+                out.writeObject(cache);
+                out.flush();
+                c.close();
+                out.close();
+            }
+        }catch(FileNotFoundException e){
+            System.err.println(getTime() + "Master_updateCache: File Not Found");
+            e.printStackTrace();
+        }catch(IOException e){
+            System.err.println(getTime() + "Master_updateCache: There was an IO error");
+            e.printStackTrace();
+        }*/
+    }
+
+    public String searchCache(String query){
+        //cache = loadCache();
+        return cache.get(query);
     }
 
     public static void main(String[] args){
