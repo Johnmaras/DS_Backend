@@ -16,7 +16,10 @@ public class Master implements Runnable{
 
     private static final Hashtable<String, String> cache = new Hashtable<>(); //term(key) and hash(value)
 
-    private static final Hashtable<Integer, String> workers = new Hashtable<>();
+    private static final Hashtable<Integer, String> workers = new Hashtable<>(); // key = incremental int, value = ip#port
+
+    private static String reducerIP;
+    private static String reducerPort;
 
     public Master(Socket con){
         this.connection = con;
@@ -31,6 +34,10 @@ public class Master implements Runnable{
     protected static Hashtable<String, String> getCache(){ return cache;}
 
     protected static Hashtable<Integer, String> getWorkers(){ return workers;}
+
+    private static boolean reducerConnected(){
+        return reducerIP != null && reducerPort != null;
+    }
 
     @Override
     public String toString() {
@@ -77,16 +84,29 @@ public class Master implements Runnable{
                 }while(true);
             }else if(message.getRequestType() == 0){
                 if(message.getQuery().equals("Worker")){
-                    String worker_id = message.getResults().get(0);
+                    String worker_id = message.getResults().get(0) + "#" + message.getResults().get(1);
                     updateWorkers(worker_id);
                     System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
                 }else if(message.getQuery().equals("Reducer")){ //0 ip, 1 port
-                    Functions.setReducer(message.getResults().get(0), message.getResults().get(1), config);
+                    reducerIP = message.getResults().get(0);
+                    reducerPort = message.getResults().get(1);
+                    Functions.setReducer(reducerIP, reducerPort, config);
                 }
                 ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
-                out.writeUTF("Connection Done!");
+                while(!reducerConnected()){
+                    out.writeBoolean(false);
+                    out.flush();
+                }
+                out.writeBoolean(true);
+                out.flush();
+
+                out.writeUTF(reducerIP);
+                out.flush();
+
+                out.writeUTF(reducerPort);
                 out.flush();
             }
+            connection.close();
         }catch(IOException e){
             System.err.println(Functions.getTime() + "Master_run: IO Error");
             e.printStackTrace();
