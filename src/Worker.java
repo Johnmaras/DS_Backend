@@ -37,7 +37,6 @@ public class Worker implements Runnable{
 
     @Override
     public void run() {
-        //Functions functions = new Functions(this);
         try{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message message = (Message)in.readObject();
@@ -95,10 +94,7 @@ public class Worker implements Runnable{
                 ReducerOut.flush();
                 System.out.print(Functions.getTime() + "Sent " + query + " " + data);
                 ObjectInputStream in = new ObjectInputStream(Reducercon.getInputStream());
-                String string = in.readUTF();
-                if(string.equals("Done")){
-                    break;
-                }
+                if(in.readBoolean()) break;
             }catch(UnknownHostException e){
                 System.err.println(Functions.getTime() + "Worker_sendToReducer: You are trying to connect to an unknown host!");
             }catch(IOException e){
@@ -140,25 +136,6 @@ public class Worker implements Runnable{
         synchronized (cache){
             cache.put(query, h);
         }
-        //redundant
-        /*try{
-            Hashtable<String, String> temp = loadCache();
-            cache.putAll(temp);
-            synchronized(cache_file){
-                FileOutputStream c = new FileOutputStream(cache_file);
-                ObjectOutputStream out = new ObjectOutputStream(c);
-                out.writeObject(cache);
-                out.flush();
-                c.close();
-                out.close();
-            }
-        }catch(FileNotFoundException e){
-            System.err.println(getTime() + "Master_updateCache: File Not Found");
-            e.printStackTrace();
-        }catch(IOException e){
-            System.err.println(getTime() + "Master_updateCache: There was an IO error");
-            e.printStackTrace();
-        }*/
     }
 
     public String searchCache(String query){

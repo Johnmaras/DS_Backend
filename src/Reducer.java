@@ -38,7 +38,7 @@ public class Reducer implements Runnable{
                 //TODO use reduce method
                 updateCache(request.getQuery(), request.getResults().get(0));
                 ObjectOutputStream o = new ObjectOutputStream(con.getOutputStream());
-                o.writeUTF("Done");
+                o.writeBoolean(true);
                 o.flush();
                 o.close();
             }else if(request.getRequestType() == 4){
@@ -96,6 +96,34 @@ public class Reducer implements Runnable{
         }
     }
 
+    private void masterHandshake(){
+        Socket handCon = null;
+        while(handCon == null){
+            try{
+                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
+                ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
+                Message message = new Message();
+                message.setQuery("Reducer");
+                ArrayList<String> data = new ArrayList<>();
+                data.add(ID);
+                data.add(Integer.toString(4001));
+                message.setResults(data);
+                out.writeObject(message);
+                out.flush();
+                ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
+                String ack = in.readUTF();
+                System.out.println(ack);
+            }catch(NullPointerException e){
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
+            }catch(UnknownHostException e){
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: You are trying to connect to an unknown host!");
+            }catch(IOException e){
+                System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
+            }
+        }
+    }
+
+    //-----DATA RELATED METHODS-----
     private ArrayList<Tuple> loadCache(){
         createCache();
         try{
@@ -166,33 +194,6 @@ public class Reducer implements Runnable{
             }catch(IOException e){
                 System.err.println(Functions.getTime() + "Master_loadCache: IOException occurred");
                 e.printStackTrace();
-            }
-        }
-    }
-
-    private void masterHandshake(){
-        Socket handCon = null;
-        while(handCon == null){
-            try{
-                handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
-                ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
-                Message message = new Message();
-                message.setQuery("Reducer");
-                ArrayList<String> data = new ArrayList<>();
-                data.add(ID);
-                data.add(Integer.toString(4001));
-                message.setResults(data);
-                out.writeObject(message);
-                out.flush();
-                ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
-                String ack = in.readUTF();
-                System.out.println(ack);
-            }catch(NullPointerException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
-            }catch(UnknownHostException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: You are trying to connect to an unknown host!");
-            }catch(IOException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
             }
         }
     }
