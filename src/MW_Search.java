@@ -19,7 +19,10 @@ public class MW_Search extends Master_Worker implements Runnable{
     public void run() {
         Message request = new Message(requestType, query);
         try{
-            InetSocketAddress worker = new InetSocketAddress(InetAddress.getByName(worker_id), 4002);
+            String[] worker_creds = worker_id.trim().split("#");
+            String worker_ip = worker_creds[0].trim();
+            int worker_port = Integer.parseInt(worker_creds[1]);
+            InetSocketAddress worker = new InetSocketAddress(InetAddress.getByName(worker_ip), worker_port);
             Socket WorkerCon = new Socket();
             WorkerCon.connect(worker, 3000);
             ObjectOutputStream out = new ObjectOutputStream(WorkerCon.getOutputStream());
