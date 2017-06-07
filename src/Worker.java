@@ -7,12 +7,15 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Random;
 
 //FIXME finish the refactoring
 public class Worker implements Runnable{
 
     private Socket con;
     private String ID = "192.168.1.70";
+    private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
+
     private String config = "config_worker";
 
     private static final Hashtable<String, String> cache = new Hashtable<>(); //term(key) and hash(value)
@@ -33,6 +36,28 @@ public class Worker implements Runnable{
     @Override
     public String toString() {
         return "Worker";
+    }
+
+    private static int getPort(){
+        return port;
+    }
+
+    //returns a random port number that is not currently in use
+    private static int generatePort(){
+        Random r = new Random(); //creates random object
+        r.setSeed(System.currentTimeMillis()); //set the seed
+        int port;
+        while(true){
+            port = r.nextInt(20000); //gets a random int from 0 to 20000
+            if(port < 4001) continue; //if the number is less than 4001, picks another one
+            try{
+                ServerSocket listen = new ServerSocket(port); //tries to listen to this port to check if it's not in use
+                listen.close(); //closes the ServerSocket(we don't need to keep it open)
+                return port; //returns the number
+            }catch(IOException e){
+                System.err.println(Functions.getTime() + "Worker_setPort: Port " + port + " is currently in use");
+            }
+        }
     }
 
     @Override
@@ -146,7 +171,7 @@ public class Worker implements Runnable{
     public static void main(String[] args){
         (new Worker(null)).masterHandshake();
         try{
-            ServerSocket listenSocket = new ServerSocket(4002);
+            ServerSocket listenSocket = new ServerSocket(getPort());
             while(true){
                 try{
                     System.out.println(Functions.getTime() + "Waiting for connections...");

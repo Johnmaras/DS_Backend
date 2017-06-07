@@ -11,6 +11,7 @@ public class Master implements Runnable{
 
     private Socket connection;
     private static String ID = "192.168.1.70";
+
     private String config = "config_master";
 
     private static final Hashtable<String, String> cache = new Hashtable<>(); //term(key) and hash(value)
