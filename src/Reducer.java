@@ -131,19 +131,20 @@ public class Reducer implements Runnable{
                 message.setQuery("Reducer");
                 ArrayList<String> data = new ArrayList<>();
                 data.add(ID);
-                data.add(Integer.toString(4001));
+                data.add(Integer.toString(getPort()));
                 message.setResults(data);
                 out.writeObject(message);
                 out.flush();
-                ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
-                String ack = in.readUTF();
-                System.out.println(ack);
+                /*ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
+                String ack = in.readUTF();*/
+                System.out.println("Handshake Done!");
             }catch(NullPointerException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
+                System.err.println(Functions.getTime() + "Reducer_masterHandshake: Null pointer occurred. Trying again");
             }catch(UnknownHostException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: You are trying to connect to an unknown host!");
+                System.err.println(Functions.getTime() + "Reducer_masterHandshake: You are trying to connect to an unknown host!");
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
+                e.printStackTrace();
+                //System.err.println(Functions.getTime() + "Reducer_masterHandshake: There was an IO error");
             }
         }
     }
