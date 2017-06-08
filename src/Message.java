@@ -5,16 +5,16 @@ public class Message implements Serializable{
 
 	private static final long serialVersionUID = 2314160120198237281L;
 	private int requestType;
-	private String query;
-	private ArrayList<String> results = new ArrayList<>();
+	private Coordinates query;
+	private ArrayList<PolylineAdapter> results = new ArrayList<>();
 
-	public Message(int requestType, String query, ArrayList<String> results){
+	public Message(int requestType, Coordinates query, ArrayList<PolylineAdapter> results){
 		this.requestType = requestType;
 		this.query = query;
 		this.results = results;
 	}
 
-	public Message(int requestType, String query){
+	public Message(int requestType, Coordinates query){
 		this.requestType = requestType;
 		this.query = query;
 	}
@@ -24,11 +24,11 @@ public class Message implements Serializable{
 		this.query = null;
 	}
 
-	public String getQuery() {
+	public Coordinates getQuery() {
 		return query;
 	}
 
-	public void setQuery(String query) {
+	public void setQuery(Coordinates query) {
 		this.query = query;
 	}
 
@@ -40,21 +40,21 @@ public class Message implements Serializable{
 		this.requestType = requestType;
 	}
 
-	public ArrayList<String> getResults() {
+	public ArrayList<PolylineAdapter> getResults() {
 		return results;
 	}
 
-	public void setResults(ArrayList<String> results) {
+	public void setResults(ArrayList<PolylineAdapter> results) {
 		this.results = results;
 	}
 
-	public void setResults(String results){
+	public void setResults(PolylineAdapter results){
 		this.results.add(results);
 	}
 
 	public String toString(){
 		String rt = requestType + " - ";
-		for(String s: results){
+		for(PolylineAdapter s: results){
 			rt += s + "_";
 		}
 		return rt;

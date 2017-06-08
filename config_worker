@@ -1,2 +1,4 @@
 masterIP 192.168.1.70
 masterPort 4000
+reducerIP 192.168.1.70
+reducerPort 14937

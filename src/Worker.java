@@ -9,7 +9,8 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Random;
 
-//FIXME finish the refactoring
+//TODO finish the refactoring
+//FIXME worker's cache must be stored on disk
 public class Worker implements Runnable{
 
     private Socket con;
@@ -18,7 +19,8 @@ public class Worker implements Runnable{
 
     private String config = "config_worker";
 
-    private static final Hashtable<String, String> cache = new Hashtable<>(); //term(key) and hash(value)
+    //TODO key = coordinates, value = PolylineAdapter
+    private static final Hashtable<String, String> cache = new Hashtable<>(); //key = term and value = hash
 
 
     public Worker(Socket con){
@@ -66,7 +68,9 @@ public class Worker implements Runnable{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 1){
-                String query = message.getQuery();
+                //TODO get coordinates
+                Coordinates query = message.getQuery();
+
                 String response = searchCache(query);
                 sendToReducer(query, response);
                 sendToMaster(null);

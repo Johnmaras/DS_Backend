@@ -38,7 +38,7 @@ public class DataGather{
             Polyline polyline = new Polyline();
             for(LatLng point: encPolyline.decodePath()){
 
-                polyline.getPoints().;
+                //polyline.getPoints().;
             }
         }
     }

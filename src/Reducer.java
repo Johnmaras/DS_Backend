@@ -66,7 +66,7 @@ public class Reducer implements Runnable{
                 o.writeBoolean(true);
                 o.flush();
                 o.close();
-            }else if(request.getRequestType() == 4){
+            }else if(request.getRequestType() == 4){ //start the reduce process
                 ArrayList<String> data = new ArrayList<>(); //there is always only one item in the data coming from the workers
                 String query = request.getQuery();
                 try{
