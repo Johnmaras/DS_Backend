@@ -15,6 +15,7 @@ public class Reducer implements Runnable{
     private String ID = "192.168.1.70";
     private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
 
+    //TODO keep only the temp_cache, file is redundant
     private final File temp_file = new File("reducer_" + hash() + "_temp");
     private ArrayList<Tuple> temp_cache = loadCache();
     private String config = "config_reducer";
@@ -67,8 +68,8 @@ public class Reducer implements Runnable{
                 o.flush();
                 o.close();
             }else if(request.getRequestType() == 4){ //start the reduce process
-                ArrayList<String> data = new ArrayList<>(); //there is always only one item in the data coming from the workers
-                String query = request.getQuery();
+                ArrayList<PolylineAdapter> data = new ArrayList<>(); //there is always only one item in the data coming from the workers
+                Coordinates query = request.getQuery();
                 try{
                     synchronized(temp_file){
                         FileInputStream fi = new FileInputStream(temp_file);
@@ -78,7 +79,7 @@ public class Reducer implements Runnable{
 
                         Stream stream = temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(s -> !s.getValue().equals("null") ? s.getValue() : null);
                         try{
-                            data = (ArrayList<String>)stream.collect(Collectors.toList());
+                            data = (ArrayList<PolylineAdapter>)stream.collect(Collectors.toList());
                         }catch(NullPointerException e){
                             System.err.println(Functions.getTime() + con.getLocalSocketAddress() + " Stream is empty!");
                         }
@@ -105,7 +106,7 @@ public class Reducer implements Runnable{
         }
     }
 
-    private void sendToMaster(String query, ArrayList<String> data){
+    private void sendToMaster(Coordinates query, ArrayList<PolylineAdapter> data){
         Message message = new Message(8, query, data);
         ObjectOutputStream out = null;
         while(out == null){
@@ -127,14 +128,37 @@ public class Reducer implements Runnable{
             try{
                 handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
                 Message message = new Message();
-                message.setQuery("Reducer");
-                ArrayList<String> data = new ArrayList<>();
-                data.add(ID);
-                data.add(Integer.toString(getPort()));
-                message.setResults(data);
+                message.setRequestType(10);
+
                 out.writeObject(message);
                 out.flush();
+
+                if(!in.readBoolean()){
+                    handCon = null;
+                    continue; //just wait for the master. false input means unwanted event happened
+                }
+
+                //message.setQuery("Reducer");
+                /*ArrayList<String> data = new ArrayList<>();
+                data.add(ID);
+                data.add(Integer.toString(getPort()));
+                message.setResults(data);*/
+                out.writeUTF(ID);
+                out.flush();
+
+                out.writeUTF(Integer.toString(getPort()));
+                out.flush();
+
+                if(!in.readBoolean()){
+                    handCon = null;
+                    continue; //just wait for the master. false input means unwanted event happened
+                }
+
+
+                /*out.writeObject(message);
+                out.flush();*/
                 /*ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
                 String ack = in.readUTF();*/
                 System.out.println("Handshake Done!");
@@ -184,7 +208,7 @@ public class Reducer implements Runnable{
         }
     }
 
-    private void updateCache(String query, String h){
+    private void updateCache(Coordinates query, PolylineAdapter h){
         temp_cache.add(new Tuple(query, h));
         try{
             ArrayList<Tuple> temp = loadCache();
