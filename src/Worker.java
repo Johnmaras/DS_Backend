@@ -1,3 +1,12 @@
+import com.google.maps.DirectionsApi;
+import com.google.maps.DirectionsApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.errors.ApiException;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.EncodedPolyline;
+import com.google.maps.model.LatLng;
+import javafx.scene.shape.Polyline;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -8,10 +17,19 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 //TODO finish the refactoring
 //FIXME worker's cache must be stored on disk
 public class Worker implements Runnable{
+
+    private final String ApiKey = "AIzaSyAa5T-N6-BRrJZSK0xlSrWlTh-C7RjOVdY";
+
+    private final GeoApiContext context = new GeoApiContext()
+            .setQueryRateLimit(3)
+            .setConnectTimeout(1, TimeUnit.SECONDS)
+            .setReadTimeout(1, TimeUnit.SECONDS)
+            .setWriteTimeout(1, TimeUnit.SECONDS).setApiKey(ApiKey);
 
     private Socket con;
     private String ID = "192.168.1.70";
@@ -20,7 +38,7 @@ public class Worker implements Runnable{
     private String config = "config_worker";
 
     //TODO key = coordinates, value = PolylineAdapter
-    private static final Hashtable<String, String> cache = new Hashtable<>(); //key = term and value = hash
+    private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = term and value = hash
 
 
     public Worker(Socket con){
@@ -67,17 +85,17 @@ public class Worker implements Runnable{
         try{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message message = (Message)in.readObject();
-            if(message.getRequestType() == 1){
+            if(message.getRequestType() == 1){ // 1 means search locally for the route
                 //TODO get coordinates
                 Coordinates query = message.getQuery();
 
-                String response = searchCache(query);
+                PolylineAdapter response = searchCache(query);
                 sendToReducer(query, response);
                 sendToMaster(null);
-            }else if(message.getRequestType() == 2){
+            }else if(message.getRequestType() == 2){ //2 means search Google API for the route
 
-                String query = message.getQuery();
-                String data = GoogleAPISearch(query);
+                Coordinates query = message.getQuery();
+                PolylineAdapter data = GoogleAPISearch(query);
                 updateCache(query, data);
                 sendToMaster(data, query);
             }
@@ -88,14 +106,52 @@ public class Worker implements Runnable{
         }
     }
 
-    private String GoogleAPISearch(String query){
-        return Double.toString(query.hashCode() * Math.random());
+    private LatLng toLatLng(LatLngAdapter latLngAdapter){
+        return new LatLng(latLngAdapter.getLatitude(), latLngAdapter.getLongitude());
     }
 
-    private void sendToMaster(String data, String... query ){
+    private LatLngAdapter toLatLngAdapter(LatLng latLng){
+        return new LatLngAdapter(latLng.lat, latLng.lng);
+    }
+
+    //TODO request from Google
+    private PolylineAdapter GoogleAPISearch(Coordinates query){
+
+        PolylineAdapter polyline = new PolylineAdapter();
+
+        //return Double.toString(query.hashCode() * Math.random());
+        LatLng origin = toLatLng(query.getOrigin());
+        LatLng dest = toLatLng(query.getDestination());
+        DirectionsApiRequest request = DirectionsApi.newRequest(context).origin(origin).destination(dest);
+
+        DirectionsResult result;
+        try {
+            result = request.await();
+
+            if(result != null) {
+                if(result.routes.length > 0){
+                    EncodedPolyline encPolyline = result.routes[0].overviewPolyline;
+
+                    for(LatLng point: encPolyline.decodePath()){
+                        polyline.addPoint(toLatLngAdapter(point));
+                    }
+                }
+            }
+        } catch (ApiException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return polyline;
+    }
+
+    private void sendToMaster(PolylineAdapter data, Coordinates... query ){
         Message message = new Message();
         if(data == null){
-            message.setRequestType(5);
+            message.setRequestType(5); //5 means inform the master that the results have been sent to the reducer
         }else{
             message.setRequestType(6);
             message.setQuery(query[0]);
@@ -111,7 +167,7 @@ public class Worker implements Runnable{
         }
     }
 
-    private void sendToReducer(String query, String data){
+    private void sendToReducer(Coordinates query, PolylineAdapter data){
         Message message = new Message(7, query);
         message.setResults(data);
         Socket Reducercon = null;
@@ -139,15 +195,29 @@ public class Worker implements Runnable{
             try{
                 handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
                 Message message = new Message();
-                message.setQuery("Worker");
-                ArrayList<String> data = new ArrayList<>();
+
+                out.writeObject(message);
+                out.flush();
+
+                if(!in.readBoolean()){
+                    handCon = null;
+                    continue; //just wait for the master. false input means unwanted event happened
+                }
+
+                out.writeUTF(ID);
+                out.flush();
+
+                out.writeUTF(Integer.toString(getPort()));
+                out.flush();
+                //message.setQuery ("Worker");
+                /*ArrayList<String> data = new ArrayList<>();
                 data.add(ID);
                 data.add(Integer.toString(getPort()));
                 message.setResults(data);
                 out.writeObject(message);
-                out.flush();
-                ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
+                out.flush();*/
                 int i = 0;
                 while(!in.readBoolean()){
                     if(i % 100000 == 0){
@@ -172,13 +242,13 @@ public class Worker implements Runnable{
     }
 
     //-----DATA RELATED METHODS-----
-    public void updateCache(String query, String h){
+    public void updateCache(Coordinates query, PolylineAdapter h){
         synchronized (cache){
             cache.put(query, h);
         }
     }
 
-    public String searchCache(String query){
+    public PolylineAdapter searchCache(Coordinates query){
         //cache = loadCache();
         return cache.get(query);
     }
