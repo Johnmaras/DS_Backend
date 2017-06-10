@@ -8,6 +8,14 @@ public class Coordinates {
         this.destination = destination;
     }
 
+    public LatLngAdapter getOrigin(){
+        return this.origin;
+    }
+
+    public LatLngAdapter getDestination() {
+        return this.destination;
+    }
+
     public void round(){
         double origin_lat = (int)(origin.getLatitude() * 100) / 100.0;
         double origin_lng = (int)(origin.getLongitude() * 100) / 100.0;

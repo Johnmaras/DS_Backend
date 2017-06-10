@@ -14,7 +14,7 @@ public class Master implements Runnable{
 
     private String config = "config_master";
 
-    private static final Hashtable<String, String> cache = new Hashtable<>(); //term(key) and hash(value)
+    private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = directions
 
     private static final Hashtable<Integer, String> workers = new Hashtable<>(); // key = incremental int, value = ip#port
 
@@ -31,7 +31,7 @@ public class Master implements Runnable{
         return ID;
     }
 
-    protected static Hashtable<String, String> getCache(){ return cache;}
+    protected static Hashtable<Coordinates, PolylineAdapter> getCache(){ return cache;}
 
     protected static Hashtable<Integer, String> getWorkers(){ return workers;}
 
@@ -54,12 +54,13 @@ public class Master implements Runnable{
         try{
             ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
             Message message = (Message)in.readObject();
-            if(message.getRequestType() == 9){
-                String query;
+            if(message.getRequestType() == 9){ // 9 means search for route
+                Coordinates query;
+                //FIXME each connection from the client accepts only one query. quit option must be removed
                 do{
                     query = message.getQuery();
                     if(query.equals("quit")) break;
-                    String response = searchCache(query);
+                    PolylineAdapter response = searchCache(query);
                     if(response == null){
                         Thread t = new Thread(new Master_Worker(query, 1));
                         t.start();
@@ -82,17 +83,19 @@ public class Master implements Runnable{
                     in = new ObjectInputStream(connection.getInputStream());
                     message = (Message)in.readObject();
                 }while(true);
-            }else if(message.getRequestType() == 0){
-                if(message.getQuery().equals("Worker")){
-                    String worker_id = message.getResults().get(0) + "#" + message.getResults().get(1);
-                    updateWorkers(worker_id);
-                    System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
-                }else if(message.getQuery().equals("Reducer")){ //0 ip, 1 port
-                    reducerIP = message.getResults().get(0);
-                    reducerPort = message.getResults().get(1);
-                    Functions.setReducer(reducerIP, reducerPort, config);
-                }
+            }else if(message.getRequestType() == 0){ //0 means worker handshake
                 ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
+
+                out.writeBoolean(true);
+                out.flush();
+
+                String worker_ip = in.readUTF();
+                String worker_port = in.readUTF();
+
+                String worker_id = worker_ip + "#" + worker_port;
+                updateWorkers(worker_id);
+                System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
+
                 while(!reducerConnected()){
                     out.writeBoolean(false);
                     out.flush();
@@ -105,6 +108,19 @@ public class Master implements Runnable{
 
                 out.writeUTF(reducerPort);
                 out.flush();
+            }else if(message.getRequestType() == 10){ // 10 means reducer handshake
+                ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
+
+                out.writeBoolean(true); //inform the reducer that it can continue
+                out.flush();
+
+                reducerIP = in.readUTF();
+                reducerPort = in.readUTF();
+
+                out.writeBoolean(true);
+                out.flush();
+
+                Functions.setReducer(reducerIP, reducerPort, config);
             }
             connection.close();
         }catch(IOException e){
@@ -116,7 +132,7 @@ public class Master implements Runnable{
         }
     }
 
-    private void connectToReducer(String query){
+    private void connectToReducer(Coordinates query){
         Socket ReducerCon = null;
         while(ReducerCon == null){
             try{
@@ -143,6 +159,7 @@ public class Master implements Runnable{
                                     e.printStackTrace();
                                 }
                             }else{
+                                //TODO use Euclidean distance to determine the best result
                                 ArrayList<String> data = message.getResults();
                                 OptionalDouble max = data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
                                 if(max.isPresent()) updateCache(message.getQuery(), Double.toString(max.getAsDouble()));
@@ -169,13 +186,13 @@ public class Master implements Runnable{
     }
 
     //-----DATA RELATED METHODS-----
-    public void updateCache(String query, String h){
+    public void updateCache(Coordinates query, PolylineAdapter h){
         synchronized (cache){
             cache.put(query, h);
         }
     }
 
-    public String searchCache(String query){
+    public PolylineAdapter searchCache(Coordinates query){
         return cache.get(query);
     }
 

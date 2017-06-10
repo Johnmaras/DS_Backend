@@ -3,10 +3,10 @@ import java.util.ArrayList;
 //TODO may add acknowledgements
 public class Master_Worker extends Master implements Runnable{
 
-    private String query;
+    private Coordinates query;
     private int requestType;
 
-    public Master_Worker(String query, int requestType){
+    public Master_Worker(Coordinates query, int requestType){
         this.query = query;
         this.requestType = requestType;
     }

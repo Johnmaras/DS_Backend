@@ -7,10 +7,10 @@ import java.net.*;
 public class MW_Search extends Master_Worker implements Runnable{
 
     private String worker_id;
-    private String query;
+    private Coordinates query;
     private int requestType;
 
-    public MW_Search(String worker_id, String query, int requestType) {
+    public MW_Search(String worker_id, Coordinates query, int requestType) {
         this.worker_id = worker_id;
         this.query = query;
         this.requestType = requestType;
@@ -35,7 +35,7 @@ public class MW_Search extends Master_Worker implements Runnable{
                 request = (Message)in.readObject();
                 if(request.getRequestType() == 5){
                     System.out.println(Functions.getTime() + " worker done " + worker_id);
-                }else if(request.getRequestType() == 6){
+                }else if(request.getRequestType() == 6){ //6 means get the results form the worker
                     updateCache(request.getQuery(), request.getResults().get(0)); //data.get(0) must not contain null
                 }
             }catch(NullPointerException e){

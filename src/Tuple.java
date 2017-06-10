@@ -3,29 +3,29 @@ import java.io.Serializable;
 public class Tuple implements Serializable{
 
     private static final long serialVersionUID = 1314160120198237281L;
-    private String key;
-    private String value;
+    private Coordinates key;
+    private PolylineAdapter value;
 
-    public Tuple(String key, String value){
+    public Tuple(Coordinates key, PolylineAdapter value){
         this.key = key;
         this.value = value;
     }
 
     public Tuple(){}
 
-    public String getKey() {
+    public Coordinates getKey() {
         return key;
     }
 
-    public void setKey(String key) {
+    public void setKey(Coordinates key) {
         this.key = key;
     }
 
-    public String getValue() {
+    public PolylineAdapter getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(PolylineAdapter value) {
         this.value = value;
     }
 

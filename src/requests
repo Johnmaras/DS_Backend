@@ -11,6 +11,7 @@ worker
     7 reducer: get the results
 
 reducer
+    10 master: handshake
     8 master: get the results
 
 client
