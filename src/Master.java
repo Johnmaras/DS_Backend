@@ -7,6 +7,10 @@ import java.util.OptionalDouble;
 //TODO handle the master's waiting for connection to reducer
 
 //FIXME finish the refactoring
+
+//TODO client sends full precision Coordinates -> master clones and rounds the Coordinates ->
+//TODO master sends to workers -> workers find and return Tuples of full precision LatLngAdapters(as keys) and PolylineAdapters(as values)
+//TODO ... -> master finds the closest of the full precision Tuples to the client's Coordinates
 public class Master implements Runnable{
 
     private Socket connection;
@@ -55,34 +59,28 @@ public class Master implements Runnable{
             ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 9){ // 9 means search for route
-                Coordinates query;
+                Coordinates query = message.getQuery().round();
                 //FIXME each connection from the client accepts only one query. quit option must be removed
-                do{
-                    query = message.getQuery();
-                    if(query.equals("quit")) break;
-                    PolylineAdapter response = searchCache(query);
-                    if(response == null){
-                        Thread t = new Thread(new Master_Worker(query, 1));
-                        t.start();
-                        try{
-                            t.join();
-                        }catch(InterruptedException e){
-                            System.err.println(Functions.getTime() + "Master_run: Interrupted!");
-                            e.printStackTrace();
-                            //TODO break if thread crashes
-                        }
-                        connectToReducer(query);
-                        response = searchCache(query);
+                PolylineAdapter response = searchCache(query);
+                if(response == null){
+                    Thread t = new Thread(new Master_Worker(query, 1));
+                    t.start();
+                    try{
+                        t.join();
+                    }catch(InterruptedException e){
+                        System.err.println(Functions.getTime() + "Master_run: Interrupted!");
+                        e.printStackTrace();
+                        //TODO break if thread crashes
                     }
-                    message = new Message();
-                    message.setResults(response);
+                    connectToReducer(query);
+                    response = searchCache(query);
+                }
+                message = new Message();
+                message.setResults(response);
 
-                    ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
-                    out.writeObject(message);
-                    out.flush();
-                    in = new ObjectInputStream(connection.getInputStream());
-                    message = (Message)in.readObject();
-                }while(true);
+                ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
+                out.writeObject(message);
+                out.flush();
             }else if(message.getRequestType() == 0){ //0 means worker handshake
                 ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
 

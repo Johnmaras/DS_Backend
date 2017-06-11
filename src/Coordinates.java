@@ -16,7 +16,7 @@ public class Coordinates {
         return this.destination;
     }
 
-    public void round(){
+    public Coordinates round(){
         double origin_lat = (int)(origin.getLatitude() * 100) / 100.0;
         double origin_lng = (int)(origin.getLongitude() * 100) / 100.0;
 
@@ -25,6 +25,7 @@ public class Coordinates {
 
         origin = new LatLngAdapter(origin_lat, origin_lng);
         destination = new LatLngAdapter(dest_lat, dest_lng);
+        return this;
     }
 
     @Override
