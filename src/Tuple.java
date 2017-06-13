@@ -3,7 +3,7 @@ import java.io.Serializable;
 public class Tuple implements Serializable{
 
     private static final long serialVersionUID = 1314160120198237281L;
-    private Coordinates key;
+    private Coordinates key; //the value is rounded
     private PolylineAdapter value;
 
     public Tuple(Coordinates key, PolylineAdapter value){
