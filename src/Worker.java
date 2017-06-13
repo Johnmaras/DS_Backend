@@ -16,11 +16,13 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 //TODO finish the refactoring
 //FIXME worker's cache must be stored on disk
+//TODO manage connections
 public class Worker implements Runnable{
 
     private final String ApiKey = "AIzaSyAa5T-N6-BRrJZSK0xlSrWlTh-C7RjOVdY";
@@ -37,8 +39,10 @@ public class Worker implements Runnable{
 
     private String config = "config_worker";
 
-    //TODO key = coordinates, value = PolylineAdapter
-    private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = term and value = hash
+    /**
+     * stores the rounded coordinates
+     */
+    private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = PolylineAdapter
 
 
     public Worker(Socket con){
@@ -86,18 +90,20 @@ public class Worker implements Runnable{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 1){ // 1 means search locally for the route
-                //TODO get coordinates
+                //query must not be rounded
                 Coordinates query = message.getQuery();
 
-                PolylineAdapter response = searchCache(query);
+                ArrayList<PolylineAdapter> response = (ArrayList<PolylineAdapter>)searchCache(query);
+                //query is full precision
                 sendToReducer(query, response);
                 sendToMaster(null);
             }else if(message.getRequestType() == 2){ //2 means search Google API for the route
 
                 Coordinates query = message.getQuery();
-                PolylineAdapter data = GoogleAPISearch(query);
-                updateCache(query, data);
-                sendToMaster(data, query);
+                //query is full precision
+                PolylineAdapter result = GoogleAPISearch(query);
+                updateCache(query, result);
+                sendToMaster(result, query);
             }
         }catch(IOException e){
             e.printStackTrace();
@@ -148,14 +154,14 @@ public class Worker implements Runnable{
         return polyline;
     }
 
-    private void sendToMaster(PolylineAdapter data, Coordinates... query ){
+    private void sendToMaster(PolylineAdapter result, Coordinates... query ){
         Message message = new Message();
-        if(data == null){
+        if(result == null){
             message.setRequestType(5); //5 means inform the master that the results have been sent to the reducer
         }else{
             message.setRequestType(6);
             message.setQuery(query[0]);
-            message.setResults(data);
+            message.setResults(result);
         }
         try{
             ObjectOutputStream Masterout = new ObjectOutputStream(con.getOutputStream());
@@ -167,18 +173,17 @@ public class Worker implements Runnable{
         }
     }
 
-    private void sendToReducer(Coordinates query, PolylineAdapter data){
-        Message message = new Message(7, query);
-        message.setResults(data);
-        Socket Reducercon = null;
-        while(Reducercon == null) {
+    private void sendToReducer(Coordinates query, ArrayList<PolylineAdapter> results){
+        Message message = new Message(7, query, results);
+        Socket ReducerCon = null;
+        while(ReducerCon == null) {
             try {
-                Reducercon = new Socket(InetAddress.getByName(Functions.getReducerIP(config)), Functions.getReducerPort(config));
-                ObjectOutputStream ReducerOut = new ObjectOutputStream(Reducercon.getOutputStream());
+                ReducerCon = new Socket(InetAddress.getByName(Functions.getReducerIP(config)), Functions.getReducerPort(config));
+                ObjectOutputStream ReducerOut = new ObjectOutputStream(ReducerCon.getOutputStream());
                 ReducerOut.writeObject(message);
                 ReducerOut.flush();
-                System.out.println(Functions.getTime() + "Sent " + query + " " + data);
-                ObjectInputStream in = new ObjectInputStream(Reducercon.getInputStream());
+                System.out.println(Functions.getTime() + "Sent " + query + " " + results);
+                ObjectInputStream in = new ObjectInputStream(ReducerCon.getInputStream());
                 if(in.readBoolean()) break;
             }catch(UnknownHostException e){
                 System.err.println(Functions.getTime() + "Worker_sendToReducer: You are trying to connect to an unknown host!");
@@ -242,15 +247,23 @@ public class Worker implements Runnable{
     }
 
     //-----DATA RELATED METHODS-----
-    public void updateCache(Coordinates query, PolylineAdapter h){
-        synchronized (cache){
-            cache.put(query, h);
+    private void updateCache(Coordinates query, PolylineAdapter result){
+        synchronized(cache){
+            cache.put(query.round(), result);
         }
     }
 
-    public PolylineAdapter searchCache(Coordinates query){
-        //cache = loadCache();
-        return cache.get(query);
+    private List<PolylineAdapter> searchCache(Coordinates query){
+        query.round();
+        List<PolylineAdapter> results = new ArrayList<>();
+        //co is rounded
+        for(Coordinates co: cache.keySet()){
+            //query is sent rounded by the master
+            if(query.equals(co)) results.add(cache.get(co));
+        }
+
+        return results;
+        //return cache.get(query);
     }
 
     public static void main(String[] args){
