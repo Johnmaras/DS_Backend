@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.OptionalDouble;
 
 //TODO handle the master's waiting for connection to reducer
@@ -18,6 +19,9 @@ public class Master implements Runnable{
 
     private String config = "config_master";
 
+    /**
+     * stores the directions the workers and the reducer send. The Coordinates are full precision
+     */
     private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = directions
 
     private static final Hashtable<Integer, String> workers = new Hashtable<>(); // key = incremental int, value = ip#port
@@ -59,8 +63,9 @@ public class Master implements Runnable{
             ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 9){ // 9 means search for route
-                Coordinates query = message.getQuery().round();
-                //FIXME each connection from the client accepts only one query. quit option must be removed
+                //FIXME Coordinates cant be rounded. Reducer will end up pairing rounded coordinates
+                //FIXME with the PolylineAdapters and master wont be able to decide the best route
+                Coordinates query = message.getQuery(); //query must be rounded in order to make worker search for a wider range of possibly matching coordinates
                 PolylineAdapter response = searchCache(query);
                 if(response == null){
                     Thread t = new Thread(new Master_Worker(query, 1));
@@ -70,7 +75,7 @@ public class Master implements Runnable{
                     }catch(InterruptedException e){
                         System.err.println(Functions.getTime() + "Master_run: Interrupted!");
                         e.printStackTrace();
-                        //TODO break if thread crashes
+                        //TODO break if thread crashes(loop removed, no break needed)
                     }
                     connectToReducer(query);
                     response = searchCache(query);
@@ -125,9 +130,41 @@ public class Master implements Runnable{
             System.err.println(Functions.getTime() + "Master_run: IO Error");
             e.printStackTrace();
             //TODO handle the reset connection error on client connections
+            //TODO (after removing the multiple requests functionality this error might not be thrown)
         }catch(ClassNotFoundException e){
             System.err.println(Functions.getTime() + "Master_run: Class not found.");
         }
+    }
+
+    private PolylineAdapter bestRoute(Coordinates query, List<PolylineAdapter> results){
+        //OptionalDouble max = results.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
+        double bestSumDist = Double.MAX_VALUE;
+        int index = -1;
+        for(PolylineAdapter pla: results){
+            double xlatPlaOrigin = pla.getOrigin().getLatitude();
+            double ylngPlaOrigin = pla.getOrigin().getLongitude();
+
+            double xlatQueryOrigin = query.getOrigin().getLatitude();
+            double ylngQueryOrigin = query.getOrigin().getLongitude();
+
+            double originDistance = Math.sqrt(Math.pow(xlatPlaOrigin - xlatQueryOrigin, 2) + Math.pow(ylngPlaOrigin - ylngQueryOrigin, 2));
+
+            double xlatPlaDest = pla.getDestination().getLatitude();
+            double ylngPlaDest = pla.getDestination().getLongitude();
+
+            double xlatQueryDest = query.getDestination().getLatitude();
+            double ylngQueryDest = query.getDestination().getLongitude();
+
+            double destDistance = Math.sqrt(Math.pow(xlatPlaDest - xlatQueryDest, 2) + Math.pow(ylngPlaDest - ylngQueryDest, 2));
+
+            double sumDistance = originDistance + destDistance;
+
+            if(sumDistance < bestSumDist){
+                bestSumDist = sumDistance;
+                index = results.indexOf(pla);
+            }
+        }
+        return results.get(index);
     }
 
     private void connectToReducer(Coordinates query){
@@ -145,22 +182,23 @@ public class Master implements Runnable{
                     try{
                         in = new ObjectInputStream(ReducerCon.getInputStream());
                         message = (Message)in.readObject();
-                        if(message.getRequestType() == 8){
+                        if(message.getRequestType() == 8){ //8 means get the results
                             if(message.getResults().isEmpty()){
                                 //join is needed to be sure that Master_Worker has updated the cache
                                 Thread t = new Thread((new Master_Worker(message.getQuery(), 2)));
                                 t.start();
                                 try{
                                     t.join();
-                                } catch (InterruptedException e) {
+                                }catch(InterruptedException e){
                                     System.err.println(Functions.getTime() + "Master_connectToReducer: Interrupted!");
                                     e.printStackTrace();
                                 }
                             }else{
                                 //TODO use Euclidean distance to determine the best result
-                                ArrayList<String> data = message.getResults();
-                                OptionalDouble max = data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
-                                if(max.isPresent()) updateCache(message.getQuery(), Double.toString(max.getAsDouble()));
+                                ArrayList<PolylineAdapter> results = message.getResults();
+                                updateCache(query, bestRoute(query, results));
+                                /*OptionalDouble max = data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
+                                if(max.isPresent()) updateCache(message.getQuery(), Double.toString(max.getAsDouble()));*/
                             }
                         }
 
@@ -174,9 +212,9 @@ public class Master implements Runnable{
                     }
                 }
                 ReducerCon.close();
-            } catch (UnknownHostException e) {
+            }catch(UnknownHostException e){
                 System.err.println(Functions.getTime() + "Master_connectToReducer: Unknown Host");
-            } catch (IOException e) {
+            }catch(IOException e){
                 System.err.println(Functions.getTime() + "Master_connectToReducer: IO Error");
                 e.printStackTrace();
             }
@@ -191,6 +229,7 @@ public class Master implements Runnable{
     }
 
     public PolylineAdapter searchCache(Coordinates query){
+        //TODO must compare the rounded Coordinates in the cache
         return cache.get(query);
     }
 
