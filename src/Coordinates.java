@@ -1,4 +1,6 @@
-public class Coordinates {
+
+//TODO override equals
+public class Coordinates{
 
     private LatLngAdapter origin;
     private LatLngAdapter destination;
@@ -23,9 +25,14 @@ public class Coordinates {
         double dest_lat = (int)(destination.getLatitude() * 100) / 100.0;
         double dest_lng = (int)(destination.getLongitude() * 100) / 100.0;
 
-        origin = new LatLngAdapter(origin_lat, origin_lng);
-        destination = new LatLngAdapter(dest_lat, dest_lng);
-        return this;
+        /*origin = new LatLngAdapter(origin_lat, origin_lng);
+        destination = new LatLngAdapter(dest_lat, dest_lng);*/
+        return new Coordinates(new LatLngAdapter(origin_lat, origin_lng), new LatLngAdapter(dest_lat, dest_lng));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return origin.equals(((Coordinates)obj).getOrigin()) && destination.equals(((Coordinates)obj).getDestination());
     }
 
     @Override
