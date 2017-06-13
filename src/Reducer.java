@@ -17,7 +17,7 @@ public class Reducer implements Runnable{
 
     //TODO keep only the temp_cache, file is redundant
     private final File temp_file = new File("reducer_" + hash() + "_temp");
-    private ArrayList<Tuple> temp_cache = loadCache();
+    private final ArrayList<Tuple> temp_cache = loadCache();
     private String config = "config_reducer";
 
     public Reducer(Socket con){
@@ -60,16 +60,18 @@ public class Reducer implements Runnable{
         try{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message request = (Message)in.readObject();
-            if(request.getRequestType() == 7){
+            if(request.getRequestType() == 7){ //7 means get the results
                 //TODO use reduce method
-                updateCache(request.getQuery(), request.getResults().get(0));
+                //query is full precision
+                updateCache(request.getQuery().round(), request.getResults());
                 ObjectOutputStream o = new ObjectOutputStream(con.getOutputStream());
                 o.writeBoolean(true);
                 o.flush();
                 o.close();
             }else if(request.getRequestType() == 4){ //start the reduce process
-                ArrayList<PolylineAdapter> data = new ArrayList<>(); //there is always only one item in the data coming from the workers
-                Coordinates query = request.getQuery();
+                ArrayList<PolylineAdapter> results = new ArrayList<>();
+                //query is full precision
+                Coordinates query = request.getQuery().round();
                 try{
                     synchronized(temp_file){
                         FileInputStream fi = new FileInputStream(temp_file);
@@ -77,20 +79,22 @@ public class Reducer implements Runnable{
 
                         ArrayList<Tuple> temp_data = (ArrayList<Tuple>)input.readObject();
 
-                        Stream stream = temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(s -> !s.getValue().equals("null") ? s.getValue() : null);
+                        //Stream stream = temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(s -> !s.getValue().equals("null") ? s.getValue() : null);
+                        Stream stream = temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(Tuple::getValue);
                         try{
-                            data = (ArrayList<PolylineAdapter>)stream.collect(Collectors.toList());
+                            results = (ArrayList<PolylineAdapter>)stream.collect(Collectors.toList());
                         }catch(NullPointerException e){
                             System.err.println(Functions.getTime() + con.getLocalSocketAddress() + " Stream is empty!");
                         }
                         System.out.print(System.nanoTime() + " ");
-                        data.forEach(System.out::println);
+                        results.forEach(System.out::println);
                     }
                 }catch(FileNotFoundException e){
                     System.err.println(Functions.getTime() + "Reducer_run: File not found");
                     e.printStackTrace();
                 }
-                sendToMaster(request.getQuery(), data);
+                //sends the full precision query
+                sendToMaster(request.getQuery(), results);
                 clearFile(temp_file);
             }
         }catch(NullPointerException e){
@@ -106,8 +110,8 @@ public class Reducer implements Runnable{
         }
     }
 
-    private void sendToMaster(Coordinates query, ArrayList<PolylineAdapter> data){
-        Message message = new Message(8, query, data);
+    private void sendToMaster(Coordinates query, ArrayList<PolylineAdapter> results){
+        Message message = new Message(8, query, results);
         ObjectOutputStream out = null;
         while(out == null){
             try{
@@ -208,25 +212,30 @@ public class Reducer implements Runnable{
         }
     }
 
-    private void updateCache(Coordinates query, PolylineAdapter h){
-        temp_cache.add(new Tuple(query, h));
-        try{
-            ArrayList<Tuple> temp = loadCache();
-            temp_cache.addAll(temp);
-            synchronized(temp_file){ //works fine
-                FileOutputStream fo = new FileOutputStream(temp_file);
-                ObjectOutputStream out = new ObjectOutputStream(fo);
-                out.writeObject(temp_cache);
-                out.flush();
-                fo.close();
-                out.close();
+    private void updateCache(Coordinates query, ArrayList<PolylineAdapter> results){
+        synchronized(temp_cache){
+            for(PolylineAdapter pla : results){
+                temp_cache.add(new Tuple(query, pla));
             }
-        }catch(FileNotFoundException e){
-            System.err.println(Functions.getTime() + "Master_updateCache: File Not Found");
-            e.printStackTrace();
-        }catch(IOException e){
-            System.err.println(Functions.getTime() + "Master_updateCache: There was an IO error");
-            e.printStackTrace();
+
+            try {
+                ArrayList<Tuple> temp = loadCache();
+                temp_cache.addAll(temp);
+                synchronized (temp_file) { //works fine
+                    FileOutputStream fo = new FileOutputStream(temp_file);
+                    ObjectOutputStream out = new ObjectOutputStream(fo);
+                    out.writeObject(temp_cache);
+                    out.flush();
+                    fo.close();
+                    out.close();
+                }
+            } catch (FileNotFoundException e) {
+                System.err.println(Functions.getTime() + "Master_updateCache: File Not Found");
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.err.println(Functions.getTime() + "Master_updateCache: There was an IO error");
+                e.printStackTrace();
+            }
         }
     }
 
