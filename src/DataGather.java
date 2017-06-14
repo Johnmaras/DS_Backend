@@ -72,23 +72,23 @@ public class DataGather{
 
         ArrayList<PolylineAdapter> polylines = new ArrayList<>();
 
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 2; i++) {
 
             Point dest;
             Point origin;
 
             synchronized(londonBounds) {
                 do {
-                    double lat = Math.random();
-                    double lng = Math.random();
+                    double lat = Math.random() * 100;
+                    double lng = Math.random() * 100;
                     origin = new Point((float) lat, (float) lng);
-                } while (londonBounds.build().contains(origin));
+                } while (!londonBounds.build().contains(origin));
 
                 do {
-                    double lat = Math.random();
-                    double lng = Math.random();
+                    double lat = Math.random() * 100;
+                    double lng = Math.random() * 100;
                     dest = new Point((float) lat, (float) lng);
-                } while (londonBounds.build().contains(dest));
+                } while (!londonBounds.build().contains(dest));
             }
 
             PolylineAdapter polyline = new PolylineAdapter();
