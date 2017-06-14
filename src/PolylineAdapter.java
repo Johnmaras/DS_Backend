@@ -1,5 +1,6 @@
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class PolylineAdapter implements Serializable{
 
@@ -40,5 +41,15 @@ public class PolylineAdapter implements Serializable{
         points.add(latlngPoint);
         origin = points.get(0);
         destination = points.get(points.size() - 1);
+    }
+
+    public void addAllPoint(Iterable<LatLngAdapter> points){
+        this.points.addAll((Collection<? extends LatLngAdapter>) points);
+        origin = this.points.get(0);
+        destination = this.points.get(this.points.size() - 1);
+    }
+
+    public boolean isEmpty(){
+        return points.isEmpty();
     }
 }
