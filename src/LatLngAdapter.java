@@ -1,5 +1,8 @@
-public class LatLngAdapter{
+import java.io.Serializable;
 
+public class LatLngAdapter implements Serializable{
+
+    private static final long serialVersionUID = 8314160120198237281L;
     private double latitude;
     private double longitude;
 
