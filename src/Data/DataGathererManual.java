@@ -1,3 +1,8 @@
+package Data;
+
+import PointAdapter.LatLngAdapter;
+import PointAdapter.PolylineAdapter;
+import com.google.gson.Gson;
 import com.google.maps.DirectionsApi;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -25,6 +30,9 @@ public class DataGathererManual implements Runnable{
     private static final File cache_file = new File("worker_cache");
     private static final ArrayList<PolylineAdapter> cache = new ArrayList<>();
 
+    private static final File jsonFile = new File("cache.json");
+    private static final ArrayList<String> jsonCache = new ArrayList<String>();
+
     private Socket con;
 
     public DataGathererManual(Socket con){
@@ -43,7 +51,6 @@ public class DataGathererManual implements Runnable{
 
             double lat = in.readDouble();
             double lng = in.readDouble();
-
             LatLng origin = new LatLng(lat, lng);
 
             out.writeBoolean(true);
@@ -51,11 +58,10 @@ public class DataGathererManual implements Runnable{
 
             lat = in.readDouble();
             lng = in.readDouble();
+            LatLng dest = new LatLng(lat, lng);
 
             out.writeBoolean(true);
             out.flush();
-
-            LatLng dest = new LatLng(lat, lng);
 
             PolylineAdapter polyline = new PolylineAdapter();
 
@@ -68,6 +74,7 @@ public class DataGathererManual implements Runnable{
             if(result != null){
                 if(result.routes.length > 0){
                     EncodedPolyline encPolyline = result.routes[0].overviewPolyline;
+                    System.out.println(encPolyline);
 
                     for(LatLng point : encPolyline.decodePath()){
                         polyline.addPoint(toLatLngAdapter(point));
@@ -86,6 +93,18 @@ public class DataGathererManual implements Runnable{
                     o.close();
                 }
             }
+
+            synchronized(jsonCache){
+                jsonCache.add(new Gson().toJson(result));
+                synchronized(jsonFile){
+                    FileOutputStream fo = new FileOutputStream(jsonFile);
+                    ObjectOutputStream o = new ObjectOutputStream(fo);
+
+                    o.writeObject(jsonCache);
+                    o.flush();
+                    o.close();
+                }
+            }
         }catch(InterruptedException e){
             e.printStackTrace();
         }catch(ApiException e){
@@ -96,15 +115,19 @@ public class DataGathererManual implements Runnable{
     }
 
     public static void main(String[] args){
-        while(true){
-            try{
-                ServerSocket listen = new ServerSocket(4000);
-                Socket new_con = listen.accept();
-                new Thread(new DataGathererManual(new_con)).start();
+        try{
+            ServerSocket listen = new ServerSocket(4000);
+            while(true){
+                try{
+                    Socket new_con = listen.accept();
+                    new Thread(new DataGathererManual(new_con)).start();
 
-            } catch (IOException e) {
-                e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
