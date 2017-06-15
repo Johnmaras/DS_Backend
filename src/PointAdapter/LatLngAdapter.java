@@ -1,3 +1,5 @@
+package PointAdapter;
+
 import java.io.Serializable;
 
 public class LatLngAdapter implements Serializable{

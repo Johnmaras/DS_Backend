@@ -1,3 +1,4 @@
+package PointAdapter;
 
 //TODO override equals
 public class Coordinates{
@@ -25,8 +26,8 @@ public class Coordinates{
         double dest_lat = (int)(destination.getLatitude() * 100) / 100.0;
         double dest_lng = (int)(destination.getLongitude() * 100) / 100.0;
 
-        /*origin = new LatLngAdapter(origin_lat, origin_lng);
-        destination = new LatLngAdapter(dest_lat, dest_lng);*/
+        /*origin = new PointAdapter.PointAdapter.LatLngAdapter(origin_lat, origin_lng);
+        destination = new PointAdapter.PointAdapter.LatLngAdapter(dest_lat, dest_lng);*/
         return new Coordinates(new LatLngAdapter(origin_lat, origin_lng), new LatLngAdapter(dest_lat, dest_lng));
     }
 
@@ -40,11 +41,11 @@ public class Coordinates{
         return "origin = " + origin + " destination = " + destination;
     }
 
-    public static void main(String[] args){
-        LatLngAdapter ll1 = new LatLngAdapter(53.2345134, 0.5533142222);
-        LatLngAdapter ll2 = new LatLngAdapter(12.6, 1.0131);
-        Coordinates co = new Coordinates(ll1, ll2);
+    /*public static void main(String[] args){
+        PointAdapter.LatLngAdapter ll1 = new PointAdapter.LatLngAdapter(53.2345134, 0.5533142222);
+        PointAdapter.LatLngAdapter ll2 = new PointAdapter.LatLngAdapter(12.6, 1.0131);
+        PointAdapter.Coordinates co = new PointAdapter.Coordinates(ll1, ll2);
         co.round();
         System.out.println(co);
-    }
+    }*/
 }
