@@ -5,8 +5,8 @@ import com.google.maps.errors.ApiException;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.LatLng;
-import javafx.scene.shape.Polyline;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -34,15 +34,15 @@ public class Worker implements Runnable{
             .setWriteTimeout(1, TimeUnit.SECONDS).setApiKey(ApiKey);
 
     private Socket con;
-    private String ID = "192.168.1.70";
+    private static String ID = "192.168.1.67";
     private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
-
     private String config = "config_worker";
 
     /**
      * stores the rounded coordinates
      */
     private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = PolylineAdapter
+    private static final File cache_file = new File("worker_cache");
 
 
     public Worker(Socket con){
@@ -50,11 +50,11 @@ public class Worker implements Runnable{
     }
 
     public void setID(String id){
-        this.ID = id;
+        ID = id;
     }
 
-    public String hash(){
-        return this.ID;
+    public static String hash(){
+        return ID;
     }
 
     @Override
