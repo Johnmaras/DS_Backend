@@ -1,17 +1,23 @@
-import java.io.*;
+//import PointAdapter.PointAdapter.PolylineAdapter;
+
+import PointAdapter.Coordinates;
+import PointAdapter.PolylineAdapter;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.OptionalDouble;
 
 //TODO handle the master's waiting for connection to reducer
 
 //FIXME finish the refactoring
 
-//TODO client sends full precision Coordinates -> master clones and rounds the Coordinates ->
+//TODO client sends full precision PointAdapter.Coordinates -> master clones and rounds the PointAdapter.Coordinates ->
 //TODO master sends to workers -> workers find and return Tuples of full precision LatLngAdapters(as keys) and PolylineAdapters(as values)
-//TODO ... -> master finds the closest of the full precision Tuples to the client's Coordinates
+//TODO ... -> master finds the closest of the full precision Tuples to the client's PointAdapter.Coordinates
 public class Master implements Runnable{
 
     private Socket connection;
@@ -20,7 +26,7 @@ public class Master implements Runnable{
     private String config = "config_master";
 
     /**
-     * stores the directions the workers and the reducer send. The Coordinates are full precision
+     * stores the directions the workers and the reducer send. The PointAdapter.Coordinates are full precision
      */
     private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = directions
 
@@ -63,7 +69,7 @@ public class Master implements Runnable{
             ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 9){ // 9 means search for route
-                //FIXME Coordinates cant be rounded. Reducer will end up pairing rounded coordinates
+                //FIXME PointAdapter.Coordinates cant be rounded. Reducer will end up pairing rounded coordinates
                 //FIXME with the PolylineAdapters and master wont be able to decide the best route
                 Coordinates query = message.getQuery(); //query must be rounded in order to make worker search for a wider range of possibly matching coordinates
                 PolylineAdapter response = searchCache(query);
@@ -229,7 +235,7 @@ public class Master implements Runnable{
     }
 
     public PolylineAdapter searchCache(Coordinates query){
-        //TODO must compare the rounded Coordinates in the cache
+        //TODO must compare the rounded PointAdapter.Coordinates in the cache
         return cache.get(query);
     }
 

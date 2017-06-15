@@ -1,3 +1,6 @@
+import PointAdapter.Coordinates;
+import PointAdapter.PolylineAdapter;
+
 import java.io.Serializable;
 
 public class Tuple implements Serializable{

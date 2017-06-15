@@ -1,3 +1,5 @@
+import PointAdapter.Coordinates;
+
 import java.util.ArrayList;
 
 //TODO may add acknowledgements
