@@ -1,3 +1,6 @@
+import PointAdapter.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.maps.DirectionsApi;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -41,7 +44,7 @@ public class Worker implements Runnable{
     /**
      * stores the rounded coordinates
      */
-    private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = PolylineAdapter
+    private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = PointAdapter.PointAdapter.PolylineAdapter
     private static final File cache_file = new File("worker_cache");
 
 
@@ -85,23 +88,59 @@ public class Worker implements Runnable{
     }
 
     @Override
-    public void run() {
-        try{
+    public void run(){
+        try {
+
+            System.out.println("Entered");
+
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            gsonBuilder.registerTypeAdapter(PolylineAdapter.class, new PolylineAdapterDeserializer());
+            gsonBuilder.registerTypeAdapter(PolylineAdapter.class, new PolylineAdapterSerializer());
+            gsonBuilder.registerTypeAdapter(LatLngAdapter.class, new LatLngAdapterDeserializer());
+            gsonBuilder.registerTypeAdapter(LatLngAdapter.class, new LatLngAdapterSerializer());
+            //gsonBuilder.setPrettyPrinting();
+            Gson gson = gsonBuilder.create();
+
+            ObjectInputStream in = new ObjectInputStream(con.getInputStream());
+            ObjectOutputStream out = new ObjectOutputStream(con.getOutputStream());
+            out.writeBoolean(true);
+            out.flush();
+
+            System.out.println("Before 1st");
+
+            String latlng1 = in.readUTF();
+            System.out.println("After 1st");
+            String latlng2 = in.readUTF();
+
+            LatLngAdapter point1 = gson.fromJson(latlng1, LatLngAdapter.class);
+            LatLngAdapter point2 = gson.fromJson(latlng2, LatLngAdapter.class);
+
+            Coordinates query = new Coordinates(point1, point2);
+            //System.out.println(query);
+
+            searchCache(query); //equals doesn't work as expected
+
+            con.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        /*try{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 1){ // 1 means search locally for the route
                 //query must not be rounded
-                Coordinates query = message.getQuery();
+                PointAdapter.Coordinates query = message.getQuery();
 
-                ArrayList<PolylineAdapter> response = (ArrayList<PolylineAdapter>)searchCache(query);
+                ArrayList<PointAdapter.PointAdapter.PolylineAdapter> response = (ArrayList<PointAdapter.PointAdapter.PolylineAdapter>)searchCache(query);
                 //query is full precision
                 sendToReducer(query, response);
                 sendToMaster(null);
             }else if(message.getRequestType() == 2){ //2 means search Google API for the route
 
-                Coordinates query = message.getQuery();
+                PointAdapter.Coordinates query = message.getQuery();
                 //query is full precision
-                PolylineAdapter result = GoogleAPISearch(query);
+                PointAdapter.PointAdapter.PolylineAdapter result = GoogleAPISearch(query);
                 updateCache(query, result);
                 sendToMaster(result, query);
             }
@@ -109,7 +148,7 @@ public class Worker implements Runnable{
             e.printStackTrace();
         }catch(ClassNotFoundException e){
             e.printStackTrace();
-        }
+        }*/
     }
 
     private LatLng toLatLng(LatLngAdapter latLngAdapter){
@@ -254,12 +293,16 @@ public class Worker implements Runnable{
     }
 
     private List<PolylineAdapter> searchCache(Coordinates query){
-        query.round();
+        query = query.round();
+        //System.out.println(query);
         List<PolylineAdapter> results = new ArrayList<>();
         //co is rounded
         for(Coordinates co: cache.keySet()){
             //query is sent rounded by the master
-            if(query.equals(co)) results.add(cache.get(co));
+            if(query.equals(co)){
+                results.add(cache.get(co));
+                System.out.println(new Gson().toJson(cache.get(co)));
+            }
         }
 
         return results;
@@ -267,9 +310,10 @@ public class Worker implements Runnable{
     }
 
     public static void main(String[] args){
-        (new Worker(null)).masterHandshake();
+        //(new Worker(null)).masterHandshake();
         try{
-            ServerSocket listenSocket = new ServerSocket(getPort());
+            //ServerSocket listenSocket = new ServerSocket(getPort());
+            ServerSocket listenSocket = new ServerSocket(4001);
             while(true){
                 try{
                     System.out.println(Functions.getTime() + "Waiting for connections...");
