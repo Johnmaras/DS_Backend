@@ -30,7 +30,7 @@ public class DummyServer{
 
                 String json = gson.toJson(polylines);
 
-                out.writeUTF(json);
+                out.writeObject(json); //writeUTF has a limit that is exceeded by json
                 out.flush();
 
                 /*out.writeLong(file.length());
