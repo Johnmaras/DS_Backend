@@ -16,11 +16,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+//getting points inside the London center is not working as expected. Does not end in the appropriate time
 public class DataGather{
 
     private static final File london_file = new File("london.json");
     private static final File cache_file = new File("worker_cache");
     private static final Polygon.Builder londonBounds = new Polygon.Builder();
+    private static final Polygon.Builder londonCenterBounds = new Polygon.Builder();
 
 
     private static LatLng toLatLng(LatLngAdapter latLngAdapter){
@@ -59,6 +61,18 @@ public class DataGather{
         }
     }
 
+    private static void getLondonCenter(){
+        Point londonUpperLeft = new Point(51.53395f, -0.19149f);
+        Point londonUpperRight = new Point(51.52306f, -0.07373f);
+        Point londonDownLeft = new Point(51.49720f, -0.18771f);
+        Point londonDownRight = new Point(51.50447f, -0.06858f);
+
+        londonCenterBounds.addVertex(londonUpperLeft);
+        londonCenterBounds.addVertex(londonUpperRight);
+        londonCenterBounds.addVertex(londonDownRight);
+        londonCenterBounds.addVertex(londonDownLeft);
+    }
+
     public static void main(String[] args) {
         final String ApiKey = "AIzaSyAa5T-N6-BRrJZSK0xlSrWlTh-C7RjOVdY";
 
@@ -68,11 +82,11 @@ public class DataGather{
                 .setReadTimeout(1, TimeUnit.SECONDS)
                 .setWriteTimeout(1, TimeUnit.SECONDS).setApiKey(ApiKey);
 
-        getLondon();
+        getLondonCenter();
 
         ArrayList<PolylineAdapter> polylines = new ArrayList<>();
 
-        for(int i = 0; i < 2; i++) {
+        for(int i = 0; i < 5; i++) {
 
             Point dest;
             Point origin;
@@ -81,14 +95,18 @@ public class DataGather{
                 do {
                     double lat = Math.random() * 100;
                     double lng = Math.random() * 100;
+                    lng *= Math.random() >= 0.5 ? -1 : 1; //50% chance of getting a negative longitude
                     origin = new Point((float) lat, (float) lng);
-                } while (!londonBounds.build().contains(origin));
+                } while (!londonCenterBounds.build().contains(origin));
+                //} while (!londonBounds.build().contains(origin));
 
                 do {
                     double lat = Math.random() * 100;
                     double lng = Math.random() * 100;
+                    lng *= Math.random() >= 0.5 ? -1 : 1; //50% chance of getting a negative longitude
                     dest = new Point((float) lat, (float) lng);
-                } while (!londonBounds.build().contains(dest));
+                } while (!londonCenterBounds.build().contains(dest));
+                //} while (!londonBounds.build().contains(dest));
             }
 
             PolylineAdapter polyline = new PolylineAdapter();
