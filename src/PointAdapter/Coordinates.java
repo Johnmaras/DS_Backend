@@ -38,8 +38,16 @@ public class Coordinates implements Serializable{
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return origin.equals(((Coordinates)obj).getOrigin()) && destination.equals(((Coordinates)obj).getDestination());
+    public boolean equals(Object obj){
+        Coordinates temp_this = this.round();
+        //System.out.println(temp_this);
+        obj = ((Coordinates)obj).round();
+        return temp_this.getOrigin().equals(((Coordinates)obj).getOrigin()) && temp_this.getDestination().equals(((Coordinates)obj).getDestination());
+    }
+
+    @Override
+    public int hashCode() {
+        return origin.hashCode() + destination.hashCode();
     }
 
     @Override

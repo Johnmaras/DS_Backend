@@ -43,6 +43,11 @@ public class LatLngAdapter implements Serializable{
     }
 
     @Override
+    public int hashCode() {
+        return (int)(latitude + longitude);
+    }
+
+    @Override
     public String toString() {
         return "latitude = " + latitude + " longitude = " + longitude;
     }
