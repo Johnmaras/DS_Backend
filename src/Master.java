@@ -29,7 +29,7 @@ public class Master implements Runnable{
     private String config = "config_master";
 
     /**
-     * stores the directions the workers and the reducer send. The PointAdapter.Coordinates are full precision
+     * stores the directions the workers and the reducer send. The PointAdapter.Coordinates are rounded precision
      */
     private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = directions
 
@@ -301,13 +301,27 @@ public class Master implements Runnable{
     //-----DATA RELATED METHODS-----
     public void updateCache(Coordinates query, PolylineAdapter h){
         synchronized (cache){
-            cache.put(query, h);
+            cache.put(query.round(), h);
         }
     }
 
     public PolylineAdapter searchCache(Coordinates query){
         //TODO must compare the rounded PointAdapter.Coordinates in the cache
-        return cache.get(query);
+        //return cache.get(query);
+
+        Coordinates queryRounded = query.round();
+        //System.out.println(query);
+        List<PolylineAdapter> results = new ArrayList<>();
+        //co is rounded
+        for(Coordinates co: cache.keySet()){
+            //query is sent rounded by the master
+            if(queryRounded.equals(co)){
+                results.add(cache.get(co));
+                //System.out.println(new Gson().toJson(cache.get(co)));
+            }
+        }
+
+        return !results.isEmpty() ? bestRoute(query, results) : null;
     }
 
     public void updateWorkers(String worker_id){

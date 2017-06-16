@@ -2,7 +2,6 @@ import Messages.Message;
 import PointAdapter.Coordinates;
 import PointAdapter.LatLngAdapter;
 import PointAdapter.PolylineAdapter;
-import com.google.gson.Gson;
 import com.google.maps.DirectionsApi;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -302,7 +301,7 @@ public class Worker implements Runnable{
             //query is sent rounded by the master
             if(query.equals(co)){
                 results.add(cache.get(co));
-                System.out.println(new Gson().toJson(cache.get(co)));
+                //System.out.println(new Gson().toJson(cache.get(co)));
             }
         }
 
