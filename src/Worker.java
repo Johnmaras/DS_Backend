@@ -1,6 +1,8 @@
-import PointAdapter.*;
+import Messages.Message;
+import PointAdapter.Coordinates;
+import PointAdapter.LatLngAdapter;
+import PointAdapter.PolylineAdapter;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.maps.DirectionsApi;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -9,10 +11,7 @@ import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.LatLng;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -28,24 +27,16 @@ import java.util.concurrent.TimeUnit;
 //TODO manage connections
 public class Worker implements Runnable{
 
-    private final String ApiKey = "AIzaSyAa5T-N6-BRrJZSK0xlSrWlTh-C7RjOVdY";
-
-    private final GeoApiContext context = new GeoApiContext()
-            .setQueryRateLimit(3)
-            .setConnectTimeout(1, TimeUnit.SECONDS)
-            .setReadTimeout(1, TimeUnit.SECONDS)
-            .setWriteTimeout(1, TimeUnit.SECONDS).setApiKey(ApiKey);
-
     private Socket con;
     private static String ID = "192.168.1.67";
     private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
     private String config = "config_worker";
 
+    private static final File cache_file = new File("worker_cache");
     /**
      * stores the rounded coordinates
      */
-    private static final Hashtable<Coordinates, PolylineAdapter> cache = new Hashtable<>(); //key = coordinates, value = PointAdapter.PointAdapter.PolylineAdapter
-    private static final File cache_file = new File("worker_cache");
+    private static final Hashtable<Coordinates, PolylineAdapter> cache = loadCache(); //key = coordinates, value = PointAdapter.PointAdapter.PolylineAdapter
 
 
     public Worker(Socket con){
@@ -89,7 +80,7 @@ public class Worker implements Runnable{
 
     @Override
     public void run(){
-        try {
+        /*try {
 
             System.out.println("Entered");
 
@@ -124,23 +115,23 @@ public class Worker implements Runnable{
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        /*try{
+        }*/
+        try{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message message = (Message)in.readObject();
             if(message.getRequestType() == 1){ // 1 means search locally for the route
                 //query must not be rounded
-                PointAdapter.Coordinates query = message.getQuery();
+                Coordinates query = message.getQuery();
 
-                ArrayList<PointAdapter.PointAdapter.PolylineAdapter> response = (ArrayList<PointAdapter.PointAdapter.PolylineAdapter>)searchCache(query);
+                ArrayList<PolylineAdapter> response = (ArrayList<PointAdapter.PolylineAdapter>)searchCache(query);
                 //query is full precision
                 sendToReducer(query, response);
                 sendToMaster(null);
             }else if(message.getRequestType() == 2){ //2 means search Google API for the route
 
-                PointAdapter.Coordinates query = message.getQuery();
+                Coordinates query = message.getQuery();
                 //query is full precision
-                PointAdapter.PointAdapter.PolylineAdapter result = GoogleAPISearch(query);
+                PolylineAdapter result = GoogleAPISearch(query);
                 updateCache(query, result);
                 sendToMaster(result, query);
             }
@@ -148,7 +139,7 @@ public class Worker implements Runnable{
             e.printStackTrace();
         }catch(ClassNotFoundException e){
             e.printStackTrace();
-        }*/
+        }
     }
 
     private LatLng toLatLng(LatLngAdapter latLngAdapter){
@@ -161,7 +152,14 @@ public class Worker implements Runnable{
 
     //TODO request from Google
     private PolylineAdapter GoogleAPISearch(Coordinates query){
+        System.out.println("Request from Google");
+        final String ApiKey = "AIzaSyAa5T-N6-BRrJZSK0xlSrWlTh-C7RjOVdY";
 
+        final GeoApiContext context = new GeoApiContext()
+                .setQueryRateLimit(3)
+                .setConnectTimeout(1, TimeUnit.SECONDS)
+                .setReadTimeout(1, TimeUnit.SECONDS)
+                .setWriteTimeout(1, TimeUnit.SECONDS).setApiKey(ApiKey);
         PolylineAdapter polyline = new PolylineAdapter();
 
         //return Double.toString(query.hashCode() * Math.random());
@@ -205,7 +203,7 @@ public class Worker implements Runnable{
         try{
             ObjectOutputStream Masterout = new ObjectOutputStream(con.getOutputStream());
             Masterout.writeObject(message);
-            System.out.println(Functions.getTime() + "Sent data: " + message.getResults());
+            System.out.println(Functions.getTime() + "Sent data to Master: " + message.getResults());
             Masterout.flush();
         }catch (IOException e) {
             System.err.println(Functions.getTime() + "Worker_sendToMaster: There was an IO error");
@@ -238,9 +236,12 @@ public class Worker implements Runnable{
         while(handCon == null){
             try{
                 handCon = new Socket(InetAddress.getByName(Functions.getMasterIP(config)), Functions.getMasterPort(config));
+                System.out.println(handCon);
                 ObjectOutputStream out = new ObjectOutputStream(handCon.getOutputStream());
                 ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
                 Message message = new Message();
+
+                in.readBoolean();
 
                 out.writeObject(message);
                 out.flush();
@@ -309,11 +310,34 @@ public class Worker implements Runnable{
         //return cache.get(query);
     }
 
+    private static Hashtable<Coordinates, PolylineAdapter> loadCache(){
+        Hashtable<Coordinates, PolylineAdapter> c = new Hashtable<>();
+        synchronized(cache_file){
+            try {
+                FileInputStream fi = new FileInputStream(cache_file);
+                ObjectInputStream in = new ObjectInputStream(fi);
+                ArrayList<PolylineAdapter> temp = (ArrayList<PolylineAdapter>)in.readObject();
+                for(PolylineAdapter pl: temp){
+                    Coordinates co = new Coordinates(pl.getOrigin(), pl.getDestination());
+                    c.put(co.round(), pl);
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return c;
+    }
+
     public static void main(String[] args){
-        //(new Worker(null)).masterHandshake();
+        System.out.println("Port = " + getPort());
+        (new Worker(null)).masterHandshake();
         try{
             //ServerSocket listenSocket = new ServerSocket(getPort());
-            ServerSocket listenSocket = new ServerSocket(4001);
+            ServerSocket listenSocket = new ServerSocket(getPort());
             while(true){
                 try{
                     System.out.println(Functions.getTime() + "Waiting for connections...");

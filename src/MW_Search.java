@@ -1,3 +1,4 @@
+import Messages.Message;
 import PointAdapter.Coordinates;
 
 import java.io.IOException;

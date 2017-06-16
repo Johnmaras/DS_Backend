@@ -1,7 +1,9 @@
 //import PointAdapter.PointAdapter.PolylineAdapter;
 
-import PointAdapter.Coordinates;
-import PointAdapter.PolylineAdapter;
+import Messages.Message;
+import PointAdapter.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,6 +12,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Scanner;
 
 //TODO handle the master's waiting for connection to reducer
 
@@ -21,7 +24,7 @@ import java.util.List;
 public class Master implements Runnable{
 
     private Socket connection;
-    private static String ID = "192.168.1.70";
+    private static String ID = "192.168.1.67";
 
     private String config = "config_master";
 
@@ -35,11 +38,17 @@ public class Master implements Runnable{
     private static String reducerIP;
     private static String reducerPort;
 
+    private int option;
+
     public Master(Socket con){
         this.connection = con;
     }
 
     public Master(){}
+
+    public void setOption(int option){
+        this.option = option;
+    }
 
     public static String hash(){
         return ID;
@@ -64,81 +73,115 @@ public class Master implements Runnable{
     }
 
     @Override
-    public void run() {
-        try{
-            ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
-            Message message = (Message)in.readObject();
-            if(message.getRequestType() == 9){ // 9 means search for route
-                //FIXME PointAdapter.Coordinates cant be rounded. Reducer will end up pairing rounded coordinates
-                //FIXME with the PolylineAdapters and master wont be able to decide the best route
-                Coordinates query = message.getQuery(); //query must be rounded in order to make worker search for a wider range of possibly matching coordinates
-                PolylineAdapter response = searchCache(query);
-                if(response == null){
-                    Thread t = new Thread(new Master_Worker(query, 1));
-                    t.start();
-                    try{
-                        t.join();
-                    }catch(InterruptedException e){
-                        System.err.println(Functions.getTime() + "Master_run: Interrupted!");
-                        e.printStackTrace();
-                        //TODO break if thread crashes(loop removed, no break needed)
+    public void run(){
+        if(option == 1) {
+            userInterface();
+        }else{
+            try{
+                ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
+                out.writeBoolean(true);
+                out.flush();
+                ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
+                //Messages.Message message = (Messages.Message)in.readObject();
+
+                Object omessage = in.readObject();
+
+                //System.out.println("Entered");
+
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                gsonBuilder.registerTypeAdapter(PolylineAdapter.class, new PolylineAdapterDeserializer());
+                gsonBuilder.registerTypeAdapter(PolylineAdapter.class, new PolylineAdapterSerializer());
+                gsonBuilder.registerTypeAdapter(LatLngAdapter.class, new LatLngAdapterDeserializer());
+                gsonBuilder.registerTypeAdapter(LatLngAdapter.class, new LatLngAdapterSerializer());
+                gsonBuilder.registerTypeAdapter(Coordinates.class, new CoordinatesDeserializer());
+                gsonBuilder.registerTypeAdapter(Coordinates.class, new CoordinatesSerializer());
+                Gson gson = gsonBuilder.create();
+
+                Message message = new Message();
+                if(omessage.getClass() == String.class){
+                    message = gson.fromJson((String)omessage, Message.class);
+                }else if(omessage.getClass() == Message.class){
+                    message = (Message)omessage;
+                }/*else if(omessage.getClass() == Messages.Message.class){
+                requestType = ((Messages.Message) omessage).getRequestType();
+                query = ((Messages.Message) omessage).getQuery();
+            }*/
+                if(message.getRequestType() == 9){ // 9 means search for route
+                    //FIXME PointAdapter.Coordinates cant be rounded. Reducer will end up pairing rounded coordinates
+                    //FIXME with the PolylineAdapters and master wont be able to decide the best route
+                    Coordinates query = message.getQuery(); //query must be rounded in order to make worker search for a wider range of possibly matching coordinates
+                    PolylineAdapter response = searchCache(query);
+                    if(response == null){
+                        Thread t = new Thread(new Master_Worker(query, 1));
+                        t.start();
+                        try{
+                            t.join();
+                        }catch(InterruptedException e){
+                            System.err.println(Functions.getTime() + "Master_run: Interrupted!");
+                            e.printStackTrace();
+                            //TODO break if thread crashes(loop removed, no break needed)
+                        }
+                        connectToReducer(query);
+                        response = searchCache(query);
                     }
-                    connectToReducer(query);
-                    response = searchCache(query);
-                }
-                message = new Message();
-                message.setResults(response);
 
-                ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
-                out.writeObject(message);
-                out.flush();
-            }else if(message.getRequestType() == 0){ //0 means worker handshake
-                ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
+                    message = new Message();
+                    message.setResults(response);
 
-                out.writeBoolean(true);
-                out.flush();
+                    System.out.println("Query is: " + query);
+                    System.out.println("Results are: \n" + response);
 
-                String worker_ip = in.readUTF();
-                String worker_port = in.readUTF();
-
-                String worker_id = worker_ip + "#" + worker_port;
-                updateWorkers(worker_id);
-                System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
-
-                while(!reducerConnected()){
-                    out.writeBoolean(false);
+                    //out = new ObjectOutputStream(connection.getOutputStream());
+                    out.writeObject(message);
                     out.flush();
+                }else if(message.getRequestType() == 0){ //0 means worker handshake
+                    //out = new ObjectOutputStream(connection.getOutputStream());
+
+                    out.writeBoolean(true);
+                    out.flush();
+
+                    String worker_ip = in.readUTF();
+                    String worker_port = in.readUTF();
+
+                    String worker_id = worker_ip + "#" + worker_port;
+                    updateWorkers(worker_id);
+                    System.out.println(Functions.getTime() + "Worker " + worker_id + " added.");
+
+                    while(!reducerConnected()){
+                        out.writeBoolean(false);
+                        out.flush();
+                    }
+                    out.writeBoolean(true);
+                    out.flush();
+
+                    out.writeUTF(reducerIP);
+                    out.flush();
+
+                    out.writeUTF(reducerPort);
+                    out.flush();
+                }else if(message.getRequestType() == 10){ // 10 means reducer handshake
+                    //out = new ObjectOutputStream(connection.getOutputStream());
+
+                    out.writeBoolean(true); //inform the reducer that it can continue
+                    out.flush();
+
+                    reducerIP = in.readUTF();
+                    reducerPort = in.readUTF();
+
+                    out.writeBoolean(true);
+                    out.flush();
+
+                    Functions.setReducer(reducerIP, reducerPort, config);
                 }
-                out.writeBoolean(true);
-                out.flush();
-
-                out.writeUTF(reducerIP);
-                out.flush();
-
-                out.writeUTF(reducerPort);
-                out.flush();
-            }else if(message.getRequestType() == 10){ // 10 means reducer handshake
-                ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
-
-                out.writeBoolean(true); //inform the reducer that it can continue
-                out.flush();
-
-                reducerIP = in.readUTF();
-                reducerPort = in.readUTF();
-
-                out.writeBoolean(true);
-                out.flush();
-
-                Functions.setReducer(reducerIP, reducerPort, config);
+                connection.close();
+            }catch(IOException e){
+                System.err.println(Functions.getTime() + "Master_run: IO Error");
+                e.printStackTrace();
+                //TODO handle the reset connection error on client connections
+                //TODO (after removing the multiple requests functionality this error might not be thrown)
+            }catch(ClassNotFoundException e){
+                System.err.println(Functions.getTime() + "Master_run: Class not found.");
             }
-            connection.close();
-        }catch(IOException e){
-            System.err.println(Functions.getTime() + "Master_run: IO Error");
-            e.printStackTrace();
-            //TODO handle the reset connection error on client connections
-            //TODO (after removing the multiple requests functionality this error might not be thrown)
-        }catch(ClassNotFoundException e){
-            System.err.println(Functions.getTime() + "Master_run: Class not found.");
         }
     }
 
@@ -202,6 +245,8 @@ public class Master implements Runnable{
                             }else{
                                 //TODO use Euclidean distance to determine the best result
                                 ArrayList<PolylineAdapter> results = message.getResults();
+                                System.out.println("Query from reducer is: " + query);
+                                System.out.println("Results from reducer are: \n" + results);
                                 updateCache(query, bestRoute(query, results));
                                 /*OptionalDouble max = data.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
                                 if(max.isPresent()) updateCache(message.getQuery(), Double.toString(max.getAsDouble()));*/
@@ -227,6 +272,32 @@ public class Master implements Runnable{
         }
     }
 
+    private void userInterface(){
+        Scanner scanner = new Scanner(System.in);
+        while(true){
+            System.out.print(ID + "> ");
+            //FIXME while waiting for new commands, messages may be printed. prompt should be printed again
+            String input = scanner.nextLine();
+            /*if(input.equals("help")){
+                help();
+            }else */if(input.equals("cache")){
+                for(Coordinates co: cache.keySet()){
+                    System.out.println(co);
+                    System.out.println(cache.get(co));
+                }
+            }/*else if(input.startsWith("get")){
+                String filename = input.trim().substring(input.indexOf(" ")).trim(); //get the filename from the search command
+                if(get(filename)){
+                    System.out.println(Functions.getTime() + "Peer_userInterface: File " + filename + " has been downloaded");
+                }else{
+                    System.out.println(Functions.getTime() + "Peer_userInterface: Failed in downloading " + filename);
+                }
+            }else{
+                System.out.println("Unknown command: " + input + " is not recognised as a command.");
+            }*/
+        }
+    }
+
     //-----DATA RELATED METHODS-----
     public void updateCache(Coordinates query, PolylineAdapter h){
         synchronized (cache){
@@ -248,6 +319,9 @@ public class Master implements Runnable{
     }
 
     public static void main(String[] args){
+        Master uiMaster = new Master();
+        uiMaster.setOption(1);
+        new Thread(uiMaster).start();
         try{
             ServerSocket listenSocket = new ServerSocket(4000);
             while(true){

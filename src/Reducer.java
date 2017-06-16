@@ -1,3 +1,4 @@
+import Messages.Message;
 import PointAdapter.Coordinates;
 import PointAdapter.PolylineAdapter;
 
@@ -15,7 +16,7 @@ import java.util.stream.Stream;
 public class Reducer implements Runnable{
 
     private Socket con;
-    private String ID = "192.168.1.70";
+    private String ID = "192.168.1.67";
     private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
 
     //TODO keep only the temp_cache, file is redundant
@@ -139,6 +140,8 @@ public class Reducer implements Runnable{
                 Message message = new Message();
                 message.setRequestType(10);
 
+                in.readBoolean();
+
                 out.writeObject(message);
                 out.flush();
 
@@ -261,6 +264,7 @@ public class Reducer implements Runnable{
     }
 
     public static void main(String[] args){
+        System.out.println("Port = " + getPort());
         new Reducer(null).masterHandshake();
         try{
             ServerSocket listenSocket = new ServerSocket(getPort());
