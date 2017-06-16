@@ -1,8 +1,9 @@
+import PointAdapter.Coordinates;
 import PointAdapter.PolylineAdapter;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Hashtable;
 
 public class test {
     public static void main(String[] args) {
@@ -12,19 +13,25 @@ public class test {
             FileInputStream fi = new FileInputStream(file);
             ObjectInputStream in = new ObjectInputStream(fi);
 
-            HashSet<PolylineAdapter> cache = (HashSet<PolylineAdapter>)in.readObject();
+            ArrayList<PolylineAdapter> temp = (ArrayList<PolylineAdapter>)in.readObject();
 
             fi.close();
 
-            ArrayList<PolylineAdapter> cache_array = new ArrayList<>();
-            cache_array.addAll(cache);
+            Hashtable<Coordinates, PolylineAdapter> c = new Hashtable<>();
+            for(PolylineAdapter pl: temp){
+                Coordinates co = new Coordinates(pl.getOrigin(), pl.getDestination());
+                c.put(co.round(), pl);
+            }
 
             FileOutputStream fo = new FileOutputStream(file);
             ObjectOutputStream out = new ObjectOutputStream(fo);
 
-            out.writeObject(cache_array);
+            out.writeObject(c);
             out.flush();
-            fo.close();
+
+            /*for(Coordinates co: c.keySet()){
+                System.out.println(c.get(co) + "\n");
+            }*/
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

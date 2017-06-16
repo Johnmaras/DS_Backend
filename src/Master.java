@@ -125,14 +125,15 @@ public class Master implements Runnable{
                         response = searchCache(query);
                     }
 
-                    message = new Message();
-                    message.setResults(response);
+                    /*message = new Message();
+                    message.setResults(response);*/
 
                     System.out.println("Query is: " + query);
                     System.out.println("Results are: \n" + response);
 
                     //out = new ObjectOutputStream(connection.getOutputStream());
-                    out.writeObject(message);
+                    String responseJson = gson.toJson(response);
+                    out.writeObject(responseJson);
                     out.flush();
                 }else if(message.getRequestType() == 0){ //0 means worker handshake
                     //out = new ObjectOutputStream(connection.getOutputStream());
@@ -282,8 +283,8 @@ public class Master implements Runnable{
                 help();
             }else */if(input.equals("cache")){
                 for(Coordinates co: cache.keySet()){
-                    System.out.println(co);
-                    System.out.println(cache.get(co));
+                    //System.out.println(co);
+                    System.out.println(cache.get(co) + "\n");
                 }
             }/*else if(input.startsWith("get")){
                 String filename = input.trim().substring(input.indexOf(" ")).trim(); //get the filename from the search command

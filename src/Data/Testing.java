@@ -1,11 +1,12 @@
 package Data;
 
 import PointAdapter.*;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.maps.internal.LatLngAdapter;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.Hashtable;
 
 public class Testing {
     public static void main(String[] args){
@@ -28,9 +29,13 @@ public class Testing {
             File file = new File("worker_cache");
             FileInputStream fi = new FileInputStream(file);
             ObjectInputStream in = new ObjectInputStream(fi);
-            ArrayList<PolylineAdapter> polylines = (ArrayList<PolylineAdapter>)in.readObject();
+            Hashtable<Coordinates, PolylineAdapter> polylines = (Hashtable<Coordinates, PolylineAdapter>)in.readObject();
 
-            String json = gson.toJson(polylines);
+            for(Coordinates co: polylines.keySet()){
+                System.out.println(polylines.get(co) + "\n");
+            }
+
+            /*String json = gson.toJson(polylines);
 
             //System.out.println(json);
 
@@ -41,7 +46,7 @@ public class Testing {
 
             for(JsonElement jo: objects){
                 System.out.println(jo);
-            }
+            }*/
 
             /*PointAdapter.PointAdapter.PolylineAdapter pl = gson.fromJson(json, PointAdapter.PointAdapter.PolylineAdapter.class);
 
