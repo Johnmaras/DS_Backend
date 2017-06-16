@@ -23,10 +23,11 @@ import java.util.concurrent.TimeUnit;
 //TODO manage connections
 public class Worker implements Runnable{
 
+    private static String config = "config_worker";
+
     private Socket con;
-    private static String ID = "192.168.1.67";
+    private static String ID = Functions.getMyIP(config);
     private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
-    private String config = "config_worker";
 
     private static final File cache_file = new File("worker_cache");
     /**
@@ -139,6 +140,7 @@ public class Worker implements Runnable{
                     updateCache(query, result);
                     sendToMaster(result, query);
                 }
+                con.close();
             }catch(IOException e){
                 e.printStackTrace();
             }catch(ClassNotFoundException e){

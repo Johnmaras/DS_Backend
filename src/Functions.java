@@ -2,7 +2,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,6 +85,17 @@ public class Functions{
             System.err.println(getTime() + "Functions_getReducerPort: IO Error");
         }
         return Integer.parseInt(reducerPort);
+    }
+
+    public static String getMyIP(String config_file){
+        String myIP = null;
+        try{
+            Stream<String> file = Files.lines(Paths.get(config_file));
+            myIP = file.filter(s -> s.trim().startsWith("myIP")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
+        }catch(IOException e){
+            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+        }
+        return myIP;
     }
 
     public static String getTime(){

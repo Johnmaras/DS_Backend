@@ -6,7 +6,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
 
-//FIXME finish the refactoring
 public class MW_Search extends Master_Worker implements Runnable{
 
     private String worker_id;
@@ -50,6 +49,7 @@ public class MW_Search extends Master_Worker implements Runnable{
                 System.err.println(Functions.getTime() + "MW_Search_run: Class Not Found");
             }
 
+            WorkerCon.close();
         }catch(UnknownHostException e){
             System.err.println(Functions.getTime() + "MW_Search_run: You are trying to connect to an unknown host!");
             e.printStackTrace();

@@ -23,10 +23,11 @@ import java.util.Scanner;
 //TODO ... -> master finds the closest of the full precision Tuples to the client's PointAdapter.Coordinates
 public class Master implements Runnable{
 
-    private Socket connection;
-    private static String ID = "192.168.1.67";
+    private static String config = "config_master";
 
-    private String config = "config_master";
+    private Socket connection;
+
+    private static String ID = Functions.getMyIP(config);
 
     /**
      * stores the directions the workers and the reducer send. The PointAdapter.Coordinates are rounded precision

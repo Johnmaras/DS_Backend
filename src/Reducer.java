@@ -15,14 +15,15 @@ import java.util.stream.Stream;
 //FIXME finish the refactoring
 public class Reducer implements Runnable{
 
-    private Socket con;
-    private String ID = "192.168.1.67";
-    private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
+    private static String config = "config_reducer";
 
+    private Socket con;
+    private String ID = Functions.getMyIP(config);
+
+    private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
     //TODO keep only the temp_cache, file is redundant
     private final File temp_file = new File("reducer_" + hash() + "_temp");
     private final ArrayList<Tuple> temp_cache = loadCache();
-    private String config = "config_reducer";
 
     public Reducer(Socket con){
         this.con = con;
@@ -101,6 +102,7 @@ public class Reducer implements Runnable{
                 sendToMaster(request.getQuery(), results);
                 clearFile(temp_file);
             }
+            con.close();
         }catch(NullPointerException e){
             System.err.println(Functions.getTime() + "Reducer_run: Null pointer occurred");
         }catch(FileNotFoundException e){
