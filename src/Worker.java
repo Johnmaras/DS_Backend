@@ -15,10 +15,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 //TODO finish the refactoring
@@ -37,9 +34,14 @@ public class Worker implements Runnable{
      */
     private static final Hashtable<Coordinates, PolylineAdapter> cache = loadCache(); //key = coordinates, value = PointAdapter.PointAdapter.PolylineAdapter
 
+    private int option;
 
     public Worker(Socket con){
         this.con = con;
+    }
+
+    public void setOption(int option){
+        this.option = option;
     }
 
     public void setID(String id){
@@ -115,29 +117,33 @@ public class Worker implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }*/
-        try{
-            ObjectInputStream in = new ObjectInputStream(con.getInputStream());
-            Message message = (Message)in.readObject();
-            if(message.getRequestType() == 1){ // 1 means search locally for the route
-                //query must not be rounded
-                Coordinates query = message.getQuery();
+        if(option == 1){
+            userInterface();
+        }else{
+            try{
+                ObjectInputStream in = new ObjectInputStream(con.getInputStream());
+                Message message = (Message)in.readObject();
+                if(message.getRequestType() == 1){ // 1 means search locally for the route
+                    //query must not be rounded
+                    Coordinates query = message.getQuery();
 
-                ArrayList<PolylineAdapter> response = (ArrayList<PointAdapter.PolylineAdapter>)searchCache(query);
-                //query is full precision
-                sendToReducer(query, response);
-                sendToMaster(null);
-            }else if(message.getRequestType() == 2){ //2 means search Google API for the route
+                    ArrayList<PolylineAdapter> response = (ArrayList<PointAdapter.PolylineAdapter>)searchCache(query);
+                    //query is full precision
+                    sendToReducer(query, response);
+                    sendToMaster(null);
+                }else if(message.getRequestType() == 2){ //2 means search Google API for the route
 
-                Coordinates query = message.getQuery();
-                //query is full precision
-                PolylineAdapter result = GoogleAPISearch(query);
-                updateCache(query, result);
-                sendToMaster(result, query);
+                    Coordinates query = message.getQuery();
+                    //query is full precision
+                    PolylineAdapter result = GoogleAPISearch(query);
+                    updateCache(query, result);
+                    sendToMaster(result, query);
+                }
+            }catch(IOException e){
+                e.printStackTrace();
+            }catch(ClassNotFoundException e){
+                e.printStackTrace();
             }
-        }catch(IOException e){
-            e.printStackTrace();
-        }catch(ClassNotFoundException e){
-            e.printStackTrace();
         }
     }
 
@@ -285,10 +291,50 @@ public class Worker implements Runnable{
         }
     }
 
+    private void userInterface(){
+        Scanner scanner = new Scanner(System.in);
+        while(true){
+            System.out.print(ID + "> ");
+            //FIXME while waiting for new commands, messages may be printed. prompt should be printed again
+            String input = scanner.nextLine();
+            /*if(input.equals("help")){
+                help();
+            }else */if(input.equals("cache")){
+                for(Coordinates co: cache.keySet()){
+                    //System.out.println(co);
+                    System.out.println(cache.get(co) + "\n");
+                }
+            }/*else if(input.startsWith("get")){
+                String filename = input.trim().substring(input.indexOf(" ")).trim(); //get the filename from the search command
+                if(get(filename)){
+                    System.out.println(Functions.getTime() + "Peer_userInterface: File " + filename + " has been downloaded");
+                }else{
+                    System.out.println(Functions.getTime() + "Peer_userInterface: Failed in downloading " + filename);
+                }
+            }else{
+                System.out.println("Unknown command: " + input + " is not recognised as a command.");
+            }*/
+        }
+    }
+
     //-----DATA RELATED METHODS-----
     private void updateCache(Coordinates query, PolylineAdapter result){
         synchronized(cache){
             cache.put(query.round(), result);
+            synchronized(cache_file){
+                try {
+                    FileOutputStream fo = new FileOutputStream(cache_file);
+                    ObjectOutputStream out = new ObjectOutputStream(fo);
+
+                    out.writeObject(cache);
+                    out.flush();
+                    out.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -310,6 +356,23 @@ public class Worker implements Runnable{
     }
 
     private static Hashtable<Coordinates, PolylineAdapter> loadCache(){
+        synchronized(cache_file){
+            try {
+                FileInputStream fi = new FileInputStream(cache_file);
+                ObjectInputStream in = new ObjectInputStream(fi);
+                return (Hashtable<Coordinates, PolylineAdapter>)in.readObject();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return new Hashtable<>();
+    }
+
+    /*private static Hashtable<Coordinates, PolylineAdapter> loadCache(){
         Hashtable<Coordinates, PolylineAdapter> c = new Hashtable<>();
         synchronized(cache_file){
             try {
@@ -329,9 +392,13 @@ public class Worker implements Runnable{
             }
         }
         return c;
-    }
+    }*/
 
     public static void main(String[] args){
+        Worker uiWorker = new Worker(null);
+        uiWorker.setOption(1);
+        new Thread(uiWorker).start();
+
         System.out.println("Port = " + getPort());
         (new Worker(null)).masterHandshake();
         try{
