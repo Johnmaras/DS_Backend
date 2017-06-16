@@ -51,6 +51,16 @@ public class PolylineAdapter implements Serializable{
         destination = this.points.get(this.points.size() - 1);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return this.origin.equals(((PolylineAdapter)obj).getOrigin()) && this.destination.equals(((PolylineAdapter)obj).getDestination());
+    }
+
+    @Override
+    public String toString() {
+        return "origin = " + origin + " destination = " + destination + "\npoints:\n" + points;
+    }
+
     public boolean isEmpty(){
         return points.isEmpty();
     }

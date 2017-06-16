@@ -1,10 +1,16 @@
 package PointAdapter;
 
+import java.io.Serializable;
+
 //TODO override equals
-public class Coordinates{
+public class Coordinates implements Serializable{
+
+    private static final long serialVersionUID = 5314160120198237281L;
 
     private LatLngAdapter origin;
     private LatLngAdapter destination;
+
+    public Coordinates(){}
 
     public Coordinates(LatLngAdapter origin, LatLngAdapter destination){
         this.origin = origin;

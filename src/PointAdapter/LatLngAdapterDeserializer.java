@@ -7,7 +7,7 @@ import java.lang.reflect.Type;
 public class LatLngAdapterDeserializer implements JsonDeserializer{
 
     @Override
-    public Object deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+    public LatLngAdapter deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
         JsonObject object = jsonElement.getAsJsonObject();
 
         double lat = object.get("lat").getAsDouble();
