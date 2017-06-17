@@ -3,7 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/Reducer_jar2</output-path>
     <root id="archive" name="Reducer.jar">
       <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/src/ReducerJar/META-INF/MANIFEST.MF" />
+        <element id="file-copy" path="$PROJECT_DIR$/src/Reducer/META-INF/MANIFEST.MF" />
       </element>
       <element id="module-output" name="Katanemimena_2" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/maps/google-maps-services/0.1.20/google-maps-services-0.1.20.jar" path-in-jar="/" />

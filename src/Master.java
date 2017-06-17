@@ -190,25 +190,40 @@ public class Master implements Runnable{
     private PolylineAdapter bestRoute(Coordinates query, List<PolylineAdapter> results){
         //OptionalDouble max = results.parallelStream().filter(p -> p != null).mapToDouble(Double::parseDouble).max();
         double bestSumDist = Double.MAX_VALUE;
+        int R = 6371;
         int index = -1;
         for(PolylineAdapter pla: results){
             double xlatPlaOrigin = pla.getOrigin().getLatitude();
             double ylngPlaOrigin = pla.getOrigin().getLongitude();
 
+            double xPlaOrigin = R * Math.cos(xlatPlaOrigin) * Math.cos(ylngPlaOrigin);
+            double yPlaOrigin = R * Math.cos(xlatPlaOrigin) * Math.sin(ylngPlaOrigin);
+
+
             double xlatQueryOrigin = query.getOrigin().getLatitude();
             double ylngQueryOrigin = query.getOrigin().getLongitude();
 
-            double originDistance = Math.sqrt(Math.pow(xlatPlaOrigin - xlatQueryOrigin, 2) + Math.pow(ylngPlaOrigin - ylngQueryOrigin, 2));
+            double xQueryOrigin = R * Math.cos(xlatQueryOrigin) * Math.cos(ylngQueryOrigin);
+            double yQueryOrigin = R * Math.cos(xlatQueryOrigin) * Math.sin(ylngQueryOrigin);
+
+            //double originDistance = Math.sqrt(Math.pow(xlatPlaOrigin - xlatQueryOrigin, 2) + Math.pow(ylngPlaOrigin - ylngQueryOrigin, 2));
+            double originDistance = Math.sqrt(Math.pow(xPlaOrigin - xQueryOrigin, 2) + Math.pow(yPlaOrigin - yQueryOrigin, 2));
 
             double xlatPlaDest = pla.getDestination().getLatitude();
             double ylngPlaDest = pla.getDestination().getLongitude();
 
+            double xPlaDest = R * Math.cos(xlatPlaDest) * Math.cos(ylngPlaDest);
+            double yPlaDest = R * Math.cos(xlatPlaDest) * Math.sin(ylngPlaDest);
+
             double xlatQueryDest = query.getDestination().getLatitude();
             double ylngQueryDest = query.getDestination().getLongitude();
 
-            double destDistance = Math.sqrt(Math.pow(xlatPlaDest - xlatQueryDest, 2) + Math.pow(ylngPlaDest - ylngQueryDest, 2));
+            double xQueryDest = R * Math.cos(xlatQueryDest) * Math.cos(ylngQueryDest);
+            double yQueryDest = R * Math.cos(xlatQueryDest) * Math.sin(ylngQueryDest);
 
-            double sumDistance = originDistance + destDistance;
+            double destDistance = Math.sqrt(Math.pow(xPlaDest - xQueryDest, 2) + Math.pow(yPlaDest - yQueryDest, 2));
+
+            double sumDistance = originDistance > destDistance ? originDistance / destDistance : destDistance / originDistance;
 
             if(sumDistance < bestSumDist){
                 bestSumDist = sumDistance;
@@ -324,6 +339,15 @@ public class Master implements Runnable{
         }
 
         return !results.isEmpty() ? bestRoute(query, results) : null;
+        /*var R = 6378.137; // Radius of earth in KM
+        var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
+        var dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                        Math.sin(dLon/2) * Math.sin(dLon/2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        var d = R * c;
+        return d * 1000; // meters*/
     }
 
     public void updateWorkers(String worker_id){

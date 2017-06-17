@@ -26,7 +26,7 @@ public class Testing {
 
 
         try {
-            File file = new File("worker_cache3");
+            File file = new File("worker_cache");
             FileInputStream fi = new FileInputStream(file);
             ObjectInputStream in = new ObjectInputStream(fi);
             Hashtable<Coordinates, PolylineAdapter> polylines = (Hashtable<Coordinates, PolylineAdapter>)in.readObject();

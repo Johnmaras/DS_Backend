@@ -1,5 +1,5 @@
-masterIP 192.168.1.67
+masterIP 192.168.1.18
 masterPort 4000
-myIP 192.168.1.67
-reducerIP 192.168.1.67
-reducerPort 7979
+myIP 192.168.1.18
+reducerIP 192.168.1.18
+reducerPort 11800
