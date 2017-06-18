@@ -110,22 +110,24 @@ public class Functions{
     }
 
     public static void printErr(String tag, String error){
-        ThreadStackTraceMethod securityManager = new ThreadStackTraceMethod();
-        System.err.println(getTime() + tag + "_" + securityManager.getCallerClassName(3) + " \"" + error + "\"");
+        String methodName = Thread.currentThread().getStackTrace()[3].getMethodName();
+        System.err.println(getTime() + tag + "_" + methodName + " \"" + error + "\"");
     }
 
-
-
-    /**
-     * Get a stack trace from the current thread
-     */
-    private static class ThreadStackTraceMethod{
-        public String  getCallerClassName(int callStackDepth) {
-            return Thread.currentThread().getStackTrace()[callStackDepth].getMethodName();
-        }
-
-        public String getMethodName() {
-            return "Current Thread StackTrace";
-        }
-    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -26,7 +26,7 @@ public class Worker implements Runnable{
     private static String ID = Functions.getMyIP(config);
     private static int port = (getPort() == 0 ? generatePort() : getPort()); //if the port is not assigned yet, set a random port number
 
-    private static final File cache_file = new File("worker_cache");
+    private static final File cache_file = new File("worker_cache2");
     /**
      * stores the rounded coordinates
      */
