@@ -7,7 +7,7 @@ import java.util.Collection;
 public class PolylineAdapter implements Serializable{
 
     private static final long serialVersionUID = 7314160120198237281L;
-    //TODO assign values
+
     /**
      * full precision values
      */

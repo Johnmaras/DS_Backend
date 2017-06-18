@@ -12,7 +12,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-//FIXME finish the refactoring
 public class Reducer implements Runnable{
 
     private static String config = "config_reducer";
@@ -55,7 +54,7 @@ public class Reducer implements Runnable{
                 listen.close(); //closes the ServerSocket(we don't need to keep it open)
                 return port; //returns the number
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Peer_setPort: Port " + port + " is currently in use");
+                Functions.printErr("Reducer", "Port " + port + " is currently in use");
             }
         }
     }
@@ -66,7 +65,6 @@ public class Reducer implements Runnable{
             ObjectInputStream in = new ObjectInputStream(con.getInputStream());
             Message request = (Message)in.readObject();
             if(request.getRequestType() == 7){ //7 means get the results
-                //TODO use reduce method
                 //query is full precision
                 updateCache(request.getQuery().round(), request.getResults());
                 ObjectOutputStream o = new ObjectOutputStream(con.getOutputStream());
@@ -84,7 +82,6 @@ public class Reducer implements Runnable{
 
                         ArrayList<Tuple> temp_data = (ArrayList<Tuple>)input.readObject();
 
-                        //Stream stream = temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(s -> !s.getValue().equals("null") ? s.getValue() : null);
                         Stream stream = temp_data.parallelStream().filter(s -> s.getKey().equals(query)).map(Tuple::getValue);
                         try{
                             results = (ArrayList<PolylineAdapter>)stream.collect(Collectors.toList());
@@ -96,7 +93,6 @@ public class Reducer implements Runnable{
                     }
                 }catch(FileNotFoundException e){
                     System.err.println(Functions.getTime() + "Reducer_run: File not found");
-                    e.printStackTrace();
                 }
                 //sends the full precision query
                 sendToMaster(request.getQuery(), results);
@@ -104,15 +100,13 @@ public class Reducer implements Runnable{
             }
             con.close();
         }catch(NullPointerException e){
-            System.err.println(Functions.getTime() + "Reducer_run: Null pointer occurred");
+            Functions.printErr(this.toString(), "Null pointer occurred");
         }catch(FileNotFoundException e){
-            System.err.println(Functions.getTime() + "Reducer_run: File not found!");
-            e.printStackTrace();
+            Functions.printErr(this.toString(), "File not found!");
         }catch(IOException e){
-            System.err.println(Functions.getTime() + "Reducer_run: IOException occurred");
-            e.printStackTrace();
+            Functions.printErr(this.toString(), "IOException occurred");
         }catch(ClassNotFoundException e){
-            System.err.println(Functions.getTime() + "Reducer_run: Class not found occurred");
+            Functions.printErr(this.toString(), "Class not found occurred");
         }
     }
 
@@ -126,8 +120,7 @@ public class Reducer implements Runnable{
                 out.flush();
                 System.out.println("Sent to Master " + message.getResults());
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Reducer_sendToMaster: IOException occurred");
-                e.printStackTrace();
+                Functions.printErr(this.toString(), "IOException occurred");
             }
         }
     }
@@ -152,11 +145,6 @@ public class Reducer implements Runnable{
                     continue; //just wait for the master. false input means unwanted event happened
                 }
 
-                //message.setQuery("Reducer");
-                /*ArrayList<String> data = new ArrayList<>();
-                data.add(ID);
-                data.add(Integer.toString(getPort()));
-                message.setResults(data);*/
                 out.writeUTF(ID);
                 out.flush();
 
@@ -168,19 +156,13 @@ public class Reducer implements Runnable{
                     continue; //just wait for the master. false input means unwanted event happened
                 }
 
-
-                /*out.writeObject(message);
-                out.flush();*/
-                /*ObjectInputStream in = new ObjectInputStream(handCon.getInputStream());
-                String ack = in.readUTF();*/
                 System.out.println("Handshake Done!");
             }catch(NullPointerException e){
-                System.err.println(Functions.getTime() + "Reducer_masterHandshake: Null pointer occurred. Trying again");
+                Functions.printErr(this.toString(), "Null pointer occurred. Trying again");
             }catch(UnknownHostException e){
-                System.err.println(Functions.getTime() + "Reducer_masterHandshake: You are trying to connect to an unknown host!");
+                Functions.printErr(this.toString(), "You are trying to connect to an unknown host!");
             }catch(IOException e){
-                e.printStackTrace();
-                //System.err.println(Functions.getTime() + "Reducer_masterHandshake: There was an IO error");
+                Functions.printErr(this.toString(), "There was an IO error");
             }
         }
     }
@@ -194,11 +176,9 @@ public class Reducer implements Runnable{
                 return (ArrayList<Tuple>) (new ObjectInputStream(f)).readObject();
             }
         }catch(IOException e){
-            System.err.println(Functions.getTime() + "Master_loadCache: IOException occurred");
-            e.printStackTrace();
+            Functions.printErr(this.toString(), "IOException occurred");
         }catch(ClassNotFoundException e){
-            System.err.println(Functions.getTime() + "Master_loadCache: ClassNotFoundException occurred");
-            e.printStackTrace();
+            Functions.printErr(this.toString(), "ClassNotFoundException occurred");
         }
         return new ArrayList<>();
     }
@@ -214,8 +194,7 @@ public class Reducer implements Runnable{
                     out.flush();
                 }
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Master_createCache: IOException occurred");
-                e.printStackTrace();
+                Functions.printErr(this.toString(), "IOException occurred");
             }
         }
     }
@@ -238,11 +217,9 @@ public class Reducer implements Runnable{
                     out.close();
                 }
             } catch (FileNotFoundException e) {
-                System.err.println(Functions.getTime() + "Master_updateCache: File Not Found");
-                e.printStackTrace();
+                Functions.printErr(this.toString(), "File Not Found");
             } catch (IOException e) {
-                System.err.println(Functions.getTime() + "Master_updateCache: There was an IO error");
-                e.printStackTrace();
+                Functions.printErr(this.toString(), "There was an IO error");
             }
         }
     }
@@ -259,8 +236,7 @@ public class Reducer implements Runnable{
                     out.close();
                 }
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Master_loadCache: IOException occurred");
-                e.printStackTrace();
+                Functions.printErr(this.toString(), "IOException occurred");
             }
         }
     }
@@ -276,11 +252,11 @@ public class Reducer implements Runnable{
                     Socket connection = listenSocket.accept();
                     new Thread(new Reducer(connection)).start();
                 }catch(IOException e){
-                    System.err.println(Functions.getTime() + "Reducer_main: There was an IO error 1");
+                    Functions.printErr("Reducer", "There was an IO error 1");
                 }
             }
         }catch(IOException e){
-            System.err.println(Functions.getTime() + "Reducer_main: There was an IO error 2");
+            Functions.printErr("Reducer", "There was an IO error 2");
         }
     }
 }

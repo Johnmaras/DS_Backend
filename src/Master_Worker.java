@@ -2,7 +2,6 @@ import PointAdapter.Coordinates;
 
 import java.util.ArrayList;
 
-//TODO may add acknowledgements
 public class Master_Worker extends Master implements Runnable{
 
     private Coordinates query;
@@ -14,8 +13,6 @@ public class Master_Worker extends Master implements Runnable{
     }
 
     public Master_Worker(){}
-
-    /*public String getQuery(){ return query;}*/
 
     @Override
     public void run(){

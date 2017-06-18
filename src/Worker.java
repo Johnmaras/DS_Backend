@@ -18,9 +18,6 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-//TODO finish the refactoring
-//FIXME worker's cache must be stored on disk
-//TODO manage connections
 public class Worker implements Runnable{
 
     private static String config = "config_worker";
@@ -33,7 +30,7 @@ public class Worker implements Runnable{
     /**
      * stores the rounded coordinates
      */
-    private static final Hashtable<Coordinates, PolylineAdapter> cache = loadCache(); //key = coordinates, value = PointAdapter.PointAdapter.PolylineAdapter
+    private static final Hashtable<Coordinates, PolylineAdapter> cache = loadCache(); //key = coordinates, value = PolylineAdapter
 
     private int option;
 
@@ -75,49 +72,13 @@ public class Worker implements Runnable{
                 listen.close(); //closes the ServerSocket(we don't need to keep it open)
                 return port; //returns the number
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Worker_setPort: Port " + port + " is currently in use");
+                Functions.printErr("Worker", "Port " + port + " is currently in use");
             }
         }
     }
 
     @Override
     public void run(){
-        /*try {
-
-            System.out.println("Entered");
-
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            gsonBuilder.registerTypeAdapter(PolylineAdapter.class, new PolylineAdapterDeserializer());
-            gsonBuilder.registerTypeAdapter(PolylineAdapter.class, new PolylineAdapterSerializer());
-            gsonBuilder.registerTypeAdapter(LatLngAdapter.class, new LatLngAdapterDeserializer());
-            gsonBuilder.registerTypeAdapter(LatLngAdapter.class, new LatLngAdapterSerializer());
-            //gsonBuilder.setPrettyPrinting();
-            Gson gson = gsonBuilder.create();
-
-            ObjectInputStream in = new ObjectInputStream(con.getInputStream());
-            ObjectOutputStream out = new ObjectOutputStream(con.getOutputStream());
-            out.writeBoolean(true);
-            out.flush();
-
-            System.out.println("Before 1st");
-
-            String latlng1 = in.readUTF();
-            System.out.println("After 1st");
-            String latlng2 = in.readUTF();
-
-            LatLngAdapter point1 = gson.fromJson(latlng1, LatLngAdapter.class);
-            LatLngAdapter point2 = gson.fromJson(latlng2, LatLngAdapter.class);
-
-            Coordinates query = new Coordinates(point1, point2);
-            //System.out.println(query);
-
-            searchCache(query); //equals doesn't work as expected
-
-            con.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
         if(option == 1){
             userInterface();
         }else{
@@ -142,9 +103,9 @@ public class Worker implements Runnable{
                 }
                 con.close();
             }catch(IOException e){
-                e.printStackTrace();
+                Functions.printErr(this.toString(), "IOException occurred");
             }catch(ClassNotFoundException e){
-                e.printStackTrace();
+                Functions.printErr(this.toString(), "Class not found exception");
             }
         }
     }
@@ -157,7 +118,6 @@ public class Worker implements Runnable{
         return new LatLngAdapter(latLng.lat, latLng.lng);
     }
 
-    //TODO request from Google
     private PolylineAdapter GoogleAPISearch(Coordinates query){
         System.out.println("Request from Google");
         final String ApiKey = "AIzaSyAa5T-N6-BRrJZSK0xlSrWlTh-C7RjOVdY";
@@ -169,7 +129,7 @@ public class Worker implements Runnable{
                 .setWriteTimeout(1, TimeUnit.SECONDS).setApiKey(ApiKey);
         PolylineAdapter polyline = new PolylineAdapter();
 
-        //return Double.toString(query.hashCode() * Math.random());
+
         LatLng origin = toLatLng(query.getOrigin());
         LatLng dest = toLatLng(query.getDestination());
         DirectionsApiRequest request = DirectionsApi.newRequest(context).origin(origin).destination(dest);
@@ -188,11 +148,11 @@ public class Worker implements Runnable{
                 }
             }
         } catch (ApiException e) {
-            e.printStackTrace();
+            Functions.printErr(this.toString(), "Google API exception");
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Functions.printErr(this.toString(), "Interrupted Exception");
         } catch (IOException e) {
-            e.printStackTrace();
+            Functions.printErr(this.toString(), "IOException");
         }
 
         return polyline;
@@ -213,7 +173,7 @@ public class Worker implements Runnable{
             System.out.println(Functions.getTime() + "Sent data to Master: " + message.getResults());
             Masterout.flush();
         }catch (IOException e) {
-            System.err.println(Functions.getTime() + "Worker_sendToMaster: There was an IO error");
+            Functions.printErr(this.toString(), "There was an IO error");
         }
     }
 
@@ -230,9 +190,9 @@ public class Worker implements Runnable{
                 ObjectInputStream in = new ObjectInputStream(ReducerCon.getInputStream());
                 if(in.readBoolean()) break;
             }catch(UnknownHostException e){
-                System.err.println(Functions.getTime() + "Worker_sendToReducer: You are trying to connect to an unknown host!");
+                Functions.printErr(this.toString(), "You are trying to connect to an unknown host!");
             }catch(IOException e){
-                System.err.println(Functions.getTime() + "Worker_sendToReducer: There was an IO error");
+                Functions.printErr(this.toString(), "There was an IO error");
             }
         }
         System.out.println(Functions.getTime() + "Finished");
@@ -263,13 +223,7 @@ public class Worker implements Runnable{
 
                 out.writeUTF(Integer.toString(getPort()));
                 out.flush();
-                //message.setQuery ("Worker");
-                /*ArrayList<String> data = new ArrayList<>();
-                data.add(ID);
-                data.add(Integer.toString(getPort()));
-                message.setResults(data);
-                out.writeObject(message);
-                out.flush();*/
+
                 int i = 0;
                 while(!in.readBoolean()){
                     if(i % 100000 == 0){
@@ -283,12 +237,11 @@ public class Worker implements Runnable{
                 Functions.setReducer(reducerIp, reducerPort, config);
                 System.out.println(Functions.getTime() + "Handshake Done! " + reducerIp + " " + reducerPort);
             }catch(NullPointerException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: Null pointer occurred. Trying again");
+                Functions.printErr(this.toString(), "Null pointer occurred. Trying again");
             }catch(UnknownHostException e){
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: You are trying to connect to an unknown host!");
+                Functions.printErr(this.toString(), "You are trying to connect to an unknown host!");
             }catch(IOException e){
-                e.printStackTrace();
-                System.err.println(Functions.getTime() + "Worker_masterHandshake: There was an IO error");
+                Functions.printErr(this.toString(), "There was an IO error");
             }
         }
     }
@@ -299,23 +252,13 @@ public class Worker implements Runnable{
             System.out.print(ID + "> ");
             //FIXME while waiting for new commands, messages may be printed. prompt should be printed again
             String input = scanner.nextLine();
-            /*if(input.equals("help")){
-                help();
-            }else */if(input.equals("cache")){
+            if(input.equals("cache")){
                 for(Coordinates co: cache.keySet()){
-                    //System.out.println(co);
                     System.out.println(cache.get(co) + "\n");
                 }
-            }/*else if(input.startsWith("get")){
-                String filename = input.trim().substring(input.indexOf(" ")).trim(); //get the filename from the search command
-                if(get(filename)){
-                    System.out.println(Functions.getTime() + "Peer_userInterface: File " + filename + " has been downloaded");
-                }else{
-                    System.out.println(Functions.getTime() + "Peer_userInterface: Failed in downloading " + filename);
-                }
-            }else{
-                System.out.println("Unknown command: " + input + " is not recognised as a command.");
-            }*/
+            }else if(input.equals("exit")){
+                System.exit(0);
+            }
         }
     }
 
@@ -332,9 +275,9 @@ public class Worker implements Runnable{
                     out.flush();
                     out.close();
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    Functions.printErr(this.toString(), "File not found");
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Functions.printErr(this.toString(), "IOException occured");
                 }
             }
         }
@@ -342,19 +285,16 @@ public class Worker implements Runnable{
 
     private List<PolylineAdapter> searchCache(Coordinates query){
         query = query.round();
-        //System.out.println(query);
         List<PolylineAdapter> results = new ArrayList<>();
         //co is rounded
         for(Coordinates co: cache.keySet()){
             //query is sent rounded by the master
             if(query.equals(co)){
                 results.add(cache.get(co));
-                //System.out.println(new Gson().toJson(cache.get(co)));
             }
         }
 
         return results;
-        //return cache.get(query);
     }
 
     private static Hashtable<Coordinates, PolylineAdapter> loadCache(){
@@ -364,37 +304,15 @@ public class Worker implements Runnable{
                 ObjectInputStream in = new ObjectInputStream(fi);
                 return (Hashtable<Coordinates, PolylineAdapter>)in.readObject();
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                Functions.printErr("Worker", "File not found");
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                Functions.printErr("Worker", "Class not found");
             } catch (IOException e) {
-                e.printStackTrace();
+                Functions.printErr("Worker", "IOException occurred");
             }
         }
         return new Hashtable<>();
     }
-
-    /*private static Hashtable<Coordinates, PolylineAdapter> loadCache(){
-        Hashtable<Coordinates, PolylineAdapter> c = new Hashtable<>();
-        synchronized(cache_file){
-            try {
-                FileInputStream fi = new FileInputStream(cache_file);
-                ObjectInputStream in = new ObjectInputStream(fi);
-                ArrayList<PolylineAdapter> temp = (ArrayList<PolylineAdapter>)in.readObject();
-                for(PolylineAdapter pl: temp){
-                    Coordinates co = new Coordinates(pl.getOrigin(), pl.getDestination());
-                    c.put(co.round(), pl);
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return c;
-    }*/
 
     public static void main(String[] args){
         Worker uiWorker = new Worker(null);
@@ -404,7 +322,6 @@ public class Worker implements Runnable{
         System.out.println("Port = " + getPort());
         (new Worker(null)).masterHandshake();
         try{
-            //ServerSocket listenSocket = new ServerSocket(getPort());
             ServerSocket listenSocket = new ServerSocket(getPort());
             while(true){
                 try{
@@ -413,11 +330,11 @@ public class Worker implements Runnable{
                     System.out.println(Functions.getTime() + "Connection accepted: " + connection.toString());
                     new Thread(new Worker(connection)).start();
                 }catch(IOException e){
-                    System.err.println(Functions.getTime() + "Worker_main: There was an IO error 1");
+                    Functions.printErr("Worker", "There was an IO error 1");
                 }
             }
         }catch(IOException e){
-            System.err.println(Functions.getTime() + "Worker_main: There was an IO error 2");
+            Functions.printErr("Worker", "There was an IO error 2");
         }
     }
 }
