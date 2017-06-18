@@ -8,15 +8,19 @@ import java.util.stream.Stream;
 
 public class Functions{
 
+    public static String name() {
+        return "Functions";
+    }
+
     public static boolean checkFile(File file){
         try{
             BufferedReader reader = new BufferedReader(new FileReader(file));
             reader.readLine();
             return true;
         }catch(NullPointerException e){
-            System.err.println(getTime() + "Functions_checkFile: File not found " + file.getName());
+            Functions.printErr(name(), "File not found " + file.getName());
         }catch(FileNotFoundException e){
-            System.err.println(getTime() + "Functions_checkFile: Error opening file " + file.getName());
+            Functions.printErr(name(), "Error opening file " + file.getName());
         }catch (IOException e){
             System.out.println("Functions_checkFile: Sudden end. " + file.getName());
         }
@@ -29,7 +33,7 @@ public class Functions{
             Stream<String> file = Files.lines(Paths.get(config_file));
             masterIP = file.filter(s -> s.trim().startsWith("masterIP")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
         }catch(IOException e){
-            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+            Functions.printErr(name(), "Functions_getMasterIP: IO Error");
         }
         return masterIP;
     }
@@ -40,7 +44,7 @@ public class Functions{
             Stream<String> file = Files.lines(Paths.get(config_file));
             masterPort = file.filter(s -> s.trim().startsWith("masterPort")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
         }catch(IOException e){
-            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+            Functions.printErr(name(), "Functions_getMasterIP: IO Error");
         }
         return Integer.parseInt(masterPort);
     }
@@ -61,7 +65,7 @@ public class Functions{
                 writer.flush();
             }
         }catch(IOException e){
-            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+            Functions.printErr(name(), "Functions_getMasterIP: IO Error");
         }
     }
 
@@ -71,7 +75,7 @@ public class Functions{
             Stream<String> file = Files.lines(Paths.get(config_file));
             reducerIP = file.filter(s -> s.trim().startsWith("reducerIP")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
         }catch(IOException e){
-            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+            Functions.printErr(name(), "Functions_getMasterIP: IO Error");
         }
         return reducerIP;
     }
@@ -82,7 +86,7 @@ public class Functions{
             Stream<String> file = Files.lines(Paths.get(config_file));
             reducerPort = file.filter(s -> s.trim().startsWith("reducerPort")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
         }catch(IOException e){
-            System.err.println(getTime() + "Functions_getReducerPort: IO Error");
+            Functions.printErr(name(), "Functions_getReducerPort: IO Error");
         }
         return Integer.parseInt(reducerPort);
     }
@@ -93,15 +97,35 @@ public class Functions{
             Stream<String> file = Files.lines(Paths.get(config_file));
             myIP = file.filter(s -> s.trim().startsWith("myIP")).map(s -> s.trim().substring(s.indexOf(" ")).trim()).findFirst().get();
         }catch(IOException e){
-            System.err.println(getTime() + "Functions_getMasterIP: IO Error");
+            Functions.printErr(name(), "Functions_getMasterIP: IO Error");
         }
         return myIP;
     }
 
     public static String getTime(){
-        return String.format("%d:%d:%d.%d ", LocalDateTime.now().getHour(), 
+        return String.format("%d:%d:%d.%d: ", LocalDateTime.now().getHour(),
                                             LocalDateTime.now().getMinute(), 
                                             LocalDateTime.now().getSecond(), 
                                             LocalDateTime.now().getNano());
+    }
+
+    public static void printErr(String tag, String error){
+        ThreadStackTraceMethod securityManager = new ThreadStackTraceMethod();
+        System.err.println(getTime() + tag + "_" + securityManager.getCallerClassName(3) + " \"" + error + "\"");
+    }
+
+
+
+    /**
+     * Get a stack trace from the current thread
+     */
+    private static class ThreadStackTraceMethod{
+        public String  getCallerClassName(int callStackDepth) {
+            return Thread.currentThread().getStackTrace()[callStackDepth].getMethodName();
+        }
+
+        public String getMethodName() {
+            return "Current Thread StackTrace";
+        }
     }
 }
