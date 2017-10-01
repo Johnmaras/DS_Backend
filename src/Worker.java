@@ -299,15 +299,15 @@ public class Worker implements Runnable{
 
     private static Hashtable<Coordinates, PolylineAdapter> loadCache(){
         synchronized(cache_file){
-            try {
+            try{
                 FileInputStream fi = new FileInputStream(cache_file);
                 ObjectInputStream in = new ObjectInputStream(fi);
                 return (Hashtable<Coordinates, PolylineAdapter>)in.readObject();
-            } catch (FileNotFoundException e) {
+            }catch(FileNotFoundException e){
                 Functions.printErr("Worker", "File not found");
-            } catch (ClassNotFoundException e) {
+            }catch(ClassNotFoundException e){
                 Functions.printErr("Worker", "Class not found");
-            } catch (IOException e) {
+            }catch(IOException e){
                 Functions.printErr("Worker", "IOException occurred");
             }
         }
